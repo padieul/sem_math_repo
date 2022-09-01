@@ -39,7 +39,8 @@ def read_xml_file_iteratively(file_str):
     for action, elem in context:
          print("%s: %s" % (action, elem.tag))
 
-def xml_to_str_chunks(filename):
+def xml_to_str_chunks(filename, max_count):
+    #max_count += 1 # 10
     xml_first_row_str = "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
     count = 0
 
@@ -81,7 +82,7 @@ def xml_to_str_chunks(filename):
             
            
             #print("Line{}: {}".format(count, line.strip()))
-            if count == 10:
+            if count == max_count:
                 break
 
         xml_to_json_dict["rows"] = row_list
@@ -128,6 +129,7 @@ if __name__ == "__main__":
     """
 
     file_name_str = "math.stackexchange.com\Posts.xml"
-    xml_to_str_chunks(file_name_str)
+    xml_to_str_chunks(file_name_str, 10)
     #xml_ch = XmlToChunks()
     #xml_ch.slice(file_name_str)
+    #xml_ch
