@@ -1,0 +1,23 @@
+tags:
+# algebra-precalculus
+# elementary-functions
+# elementary-set-theory
+# elementary-number-theory
+# euclidean geometry
+# analytic geometry
+# trigonometry
+
+
+types:
+# scalar: real, complex, natural
+# vector: r2, r3, rn
+# matrix 
+# set: real, natural, arbitrary 
+# function 
+# arbitrary
+
+
+operators: 
+# set operator: union, intersection, complement,  subset, element, not-element, 
+# scalar operator
+# vector operator ...

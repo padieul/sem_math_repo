@@ -1,6 +1,10 @@
 import xml.dom.minidom
 import xmltodict, json
 
+
+
+
+
 def slice_to_json(count, r_list):
     xml_to_json_dict = {} 
     xml_to_json_dict["rows"] = r_list
@@ -42,10 +46,18 @@ def xml_to_str_chunks(filename, slice_size, limiting_tags):
 
     return len(row_list)
 
+
+
+
+
+
+
 if __name__ == "__main__":
     
+    """
     file_name_str = "math.stackexchange.com\Votes.xml"
     posts_count = xml_to_str_chunks(filename = file_name_str, 
                                     slice_size = 100000,  
                                     limiting_tags=["<votes>", "</votes>"]) #["<posts>", "</posts>"] # "<tags>", "</tags>"
     print("count: ", posts_count)
+    """
