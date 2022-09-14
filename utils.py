@@ -47,8 +47,13 @@ def xml_to_str_chunks(filename, slice_size, limiting_tags):
     return len(row_list)
 
 
+def slice_json_file(rel_dir_part, file_name ,rows_size):
+    with open(rel_dir_part + "\\" + file_name, "r") as f:
+        data = json.load(f)
+    f.close()
 
-
+    print(len(data["rows"])) 
+    print(json.dumps(data["rows"][0], indent=4, sort_keys=False))
 
 
 
@@ -61,3 +66,5 @@ if __name__ == "__main__":
                                     limiting_tags=["<votes>", "</votes>"]) #["<posts>", "</posts>"] # "<tags>", "</tags>"
     print("count: ", posts_count)
     """
+
+    slice_json_file("math.stackexchange.com\\posts_json_slices", "json_output100000.json", 100)
