@@ -141,8 +141,10 @@ if __name__ == "__main__":
     post_file_names = glob.glob("math.stackexchange.com\posts_json_slices\*")
     post_file_names.sort()
     for post_file_name in post_file_names:
+        """
         if post_file_name == saved_file_name:
             continue
+        """
         print("Filename: ", post_file_name)
         count = post_threads_to_db(datab, "threads", post_file_name)
         print("Total number of threads: ", count)
