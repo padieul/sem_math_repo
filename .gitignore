@@ -5,3 +5,5 @@
 /dlmf-chapters-SimpleXML
 
 db_conf.json
+conf/storing_log.txt
+conf/copy_log.txt
