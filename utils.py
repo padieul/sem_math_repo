@@ -191,11 +191,18 @@ def copy_to_threads(db, client, post_file_name):
             for post_thread in tqdm(threads_cursor):
                 thread_id = post_thread["thread_id"]
 
+                """
                 if not db[threads_coll_name].count_documents({"thread_id": thread_id}) == 0: 
                     continue
                 else:
                     new_id = db[threads_coll_name].insert_one(post_thread).inserted_id
                     copy_count += 1
+                """ 
+                try:
+                    new_id = db[threads_coll_name].insert_one(post_thread).inserted_id
+                    copy_count += 1
+                except:
+                    continue
 
 
 
@@ -219,7 +226,11 @@ def write_to_copy_log(post_file_name, num_copied, num_total, log_file_name):
 ## ----------------------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    saved_file_names = ["math.stackexchange.com\posts_json_slices\json_output100000.json", "math.stackexchange.com\posts_json_slices\json_output100000.json" ]     # already processed file
+    saved_file_names = ["math.stackexchange.com\posts_json_slices\json_output100000.json",  \
+                        "math.stackexchange.com\posts_json_slices\json_output1000000.json", \
+                        "math.stackexchange.com\posts_json_slices\json_output1100000.json", \
+                        "math.stackexchange.com\posts_json_slices\json_output1200000.json", \
+                        "math.stackexchange.com\posts_json_slices\json_output1300000.json"  ]     # already processed file
     log_file_name = "conf\copy_log.txt"                                                     # processing log
     db_settings_file_name = "conf\db_conf.json"                                             # mongo settings file
     
