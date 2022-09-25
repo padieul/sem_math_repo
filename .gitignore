@@ -1,4 +1,5 @@
 /math.stackexchange.com
+/math.meta.stackexchange.com
 /.vscode
 /dlmf-chapters-OneJsonObjectPerMathExpr 
 /dlmf-chapters-OneTextBlockPerMathExpr
@@ -7,3 +8,5 @@
 db_conf.json
 conf/storing_log.txt
 conf/copy_log.txt
+tags_categories.txt 
+xml_posts_math_sample.txt
