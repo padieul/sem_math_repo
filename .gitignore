@@ -4,6 +4,8 @@
 /dlmf-chapters-OneJsonObjectPerMathExpr 
 /dlmf-chapters-OneTextBlockPerMathExpr
 /dlmf-chapters-SimpleXML
+/conf 
+
 
 db_conf.json
 conf/storing_log.txt
