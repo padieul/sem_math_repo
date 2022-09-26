@@ -43,13 +43,16 @@ class MSE_Analyzer:
 
     def apply_to_each(self, all_threads_coll_name, func):
         counter = 0
+        counter_all = 0
+
         with self._client.start_session() as session:
             threads_cursor = self._db[all_threads_coll_name].find({}, no_cursor_timeout=True, batch_size=1, session=session)
             total_count = self._db[all_threads_coll_name].count_documents({})
 
             for post_thread in tqdm(threads_cursor, total = total_count):
+                counter_all += 1
                 try:
-                    counter += func(self._db, self._client, post_thread)
+                    counter += func(self._db, self._client, all_threads_coll_name, post_thread)
                 except:
                     continue
 

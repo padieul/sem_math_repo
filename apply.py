@@ -8,15 +8,27 @@ SEL_TAGS = ["algebra-precalculus", \
             "analytic-geometry", \
             "trigonometry"]
 
-def cat_func(db, cl, single_post_thread):
-    
-    count = 0
+def get_tags_func(db, cl, coll_name, single_post_thread):
 
+    count = 0
+    _id = single_post_thread["_id"]
     tags = single_post_thread["posts"][0]["@Tags"]
     tags_list = tags.split("><")
-    tags_list[0].replace("<","")
-    tags_list[-1].replace(">","") 
+    tags_list_new = [t.replace(" ", "").replace("<", "").replace(">", "") for t in tags_list]
 
+    try:
+        db[coll_name].update_one({"_id": _id}, {"$set": {"tags": tags_list_new}})
+        count = 1
+    except:
+        ...
+    
+    return count
+
+def cat_func(db, cl, coll_name, single_post_thread):
+    
+    count = 0
+    tags_list = single_post_thread["tags"]
+    
     for tag in tags_list:
         if tag in SEL_TAGS:
             count = 0
@@ -32,7 +44,7 @@ def cat_func(db, cl, single_post_thread):
 def create_collections_func(db, cl):
     
     new_cols = []
-    for tagname in SEL_TAGS:
+    for tagname in ["b", "g", "c"]:
         new_cols.append(db[tagname])
 
 
@@ -42,5 +54,9 @@ if __name__ == "__main__":
     db_settings_file_name = "conf\db_conf.json"             # settings file
 
     an1 = MSE_Analyzer(db_settings_file_name, log_file_name) 
-    an1.apply_once("threads", create_collections_func)
-    an1.apply_to_each("threads", cat_func)
+
+    #an1.apply_to_each("threads", get_tags_func)
+    #an1.apply_once("threads", create_collections_func)
+
+    an1.apply_to_each("elementary-set-theory", extract_formulas_func)
+    
