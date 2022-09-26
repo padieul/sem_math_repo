@@ -41,11 +41,7 @@ def cat_func(db, cl, coll_name, single_post_thread):
     return count
 
 
-def create_collections_func(db, cl):
     
-    new_cols = []
-    for tagname in ["b", "g", "c"]:
-        new_cols.append(db[tagname])
 
 
 if __name__ == "__main__":
@@ -54,9 +50,7 @@ if __name__ == "__main__":
     db_settings_file_name = "conf\db_conf.json"             # settings file
 
     an1 = MSE_Analyzer(db_settings_file_name, log_file_name) 
-
     #an1.apply_to_each("threads", get_tags_func)
-    #an1.apply_once("threads", create_collections_func)
 
     an1.apply_to_each("elementary-set-theory", extract_formulas_func)
     
