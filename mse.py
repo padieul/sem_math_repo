@@ -1,9 +1,39 @@
 import json 
+import spacy
 from pymongo import MongoClient 
 from tqdm import tqdm
+import re
 
 
-class MSE_Analyzer:
+class MSE_Thread:
+
+    def __init__(self, post_thread):
+        
+        self._posts_txt = [p["@Body"] for p in post_thread["posts"]]
+        self._posts_tokenized = []
+        self._posts_formulas = {}
+
+    def get_formulas(self):
+        nlp = spacy.load("en_core_web_sm")
+
+        temp_list = []
+        for txt in self._posts_txt:
+            temp_list.append(self._substitute_formulas(txt))
+
+        for txt in temp_list:
+            doc = nlp(txt)
+            self._posts_tokenized.append([token.text for token in doc])
+
+    def _substitute_formulas(self, text):
+        forms = re.findall(r"<span class=\\\"math-container\\\">\.+</span>", text)
+        print(forms)
+
+    def get_tokenized_text(self):
+        return list(self._posts_tokenized)
+
+
+
+class MSE_DBS:
 
     def __init__(self, sett_file_path, log_file_path = "conf\\analyzer_log.txt"):
 

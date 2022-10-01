@@ -14,3 +14,5 @@ tags_categories.txt
 xml_posts_math_sample.txt
 selected_tags.txt
 apply.py
+testing.py
+__pycache__/mse.cpython-310.pyc
