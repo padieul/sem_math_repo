@@ -54,7 +54,7 @@ def extract_formulas_func(db, cl, coll_name, single_post_thread):
     _id = single_post_thread["_id"]
     mse_th_obj = MSE_Thread(single_post_thread) 
     formulas = mse_th_obj.get_formulas()
-    formulas_count = len(formulas_count)
+    formulas_count = len(formulas)
     tokenized_thread = mse_th_obj.get_tokenized_text() 
 
     try:
@@ -65,6 +65,7 @@ def extract_formulas_func(db, cl, coll_name, single_post_thread):
         count = 1
     except:
         ...
+    
 
     return count
     
