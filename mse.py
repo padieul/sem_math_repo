@@ -13,6 +13,10 @@ class MSE_Thread:
         self._posts_tokenized = []
         self._posts_formulas = {}
 
+        self._title = post_thread["posts"][0]["@Title"]
+        self._title_formulas = {}
+        self._title_tokenized = {}
+
     def get_formulas(self):
         nlp = spacy.load("en_core_web_sm")
 
@@ -29,7 +33,7 @@ class MSE_Thread:
         return dict(self._posts_formulas)
 
     def _substitute_formulas(self, counter, text):
-        matches = re.findall(r"(<span class=\"math-container\">\$.+?\$</span>)|(\$.+?\$)|(\d+ )", text)
+        matches = re.findall(r"(<span class=\"math-container\">\$.+?\$</span>)|()|(\$.+?\$)|(\d+ )", text)
         
         counter1 = 0
         for match in matches:
@@ -68,13 +72,49 @@ class MSE_Thread:
         text = text.replace("<", " ").replace(">", " ")
         text = text.replace("\"", " ")
     
-
-    
         return text
 
+    def get_title_formulas(self):
+        
+        nlp = spacy.load("en_core_web_sm")
+
+        substituted_title_text = self._substitute_title_formulas(self._title)
+        doc = nlp(substituted_title_text)
+        for token in doc:
+            self._title_tokenized[token.text] = token.dep_
+
+        return self._title_formulas
+
+    def get_tokenized_title(self):
+         
+        return self._title_tokenized
+
+    def _substitute_title_formulas(self, text):
+        matches = re.findall(r"(<span class=\"math-container\">\$.+?\$</span>)|(begin{align}(?s).+?end{align})|(\$.+?\$)|(\d+ )", text)
+        
+        counter = 0
+        counter1 = 0
+        for match in matches:
+            counter2 = 0
+            for elem in match: 
+                if not elem == "":
+                    formula_id = "f" + "_" + str(counter) + "_" + str(counter1) + "_" + str(counter2) 
+                    text = text.replace(elem, " " + formula_id + " ", 1)
+                    elem = elem.replace("<span class=\"math-container\">", "")
+                    elem = elem.replace("</span>", "")
+                    elem = elem.replace("$", "")
+                    self._title_formulas[formula_id] = elem
+                    counter2 += 1
+            counter1 += 1
+
+        text = self._filter_out_markup(text)
+        return text
 
     def get_tokenized_text(self):
         return list(self._posts_tokenized)
+
+    def get_title_str(self):
+        return self._title
 
 
 
@@ -87,6 +127,8 @@ class MSE_DBS:
 
         sett = self._get_db_settings(self._sett_file_path)
         self._db, self._client = self._get_mongo_db(sett)
+
+        self._total_count = 0
 
     def _get_db_settings(self, s_filename):
 
@@ -116,23 +158,30 @@ class MSE_DBS:
         return db,client
 
 
-    def apply_to_each(self, all_threads_coll_name, func):
+    def apply_to_each(self, all_threads_coll_name, func, limit):
         counter = 0
         counter_all = 0
 
         with self._client.start_session() as session:
             threads_cursor = self._db[all_threads_coll_name].find({}, no_cursor_timeout=True, batch_size=1, session=session)
             total_count = self._db[all_threads_coll_name].count_documents({})
-
+            token_dict = {}
+            limit_count = 0
             for post_thread in tqdm(threads_cursor, total = total_count):
+                if limit_count == limit:
+                    break
                 counter_all += 1
                 try:
-                    counter += func(self._db, self._client, all_threads_coll_name, post_thread)
+                    #counter += func(self._db, self._client, all_threads_coll_name, token_dict, post_thread)
+                    token_dict = func(self._db, self._client, all_threads_coll_name, token_dict, post_thread)
                 except:
                     continue
+                limit_count += 1
 
+        self._total_count += counter
+        
         session.end_session()
-
+        return token_dict
 
     def apply_once(self, all_threads_coll_name, func):
         
@@ -143,6 +192,9 @@ class MSE_DBS:
                 ...
                 
         session.end_session()
+
+    def get_count(self):
+        return self._total_count
     
     
 
