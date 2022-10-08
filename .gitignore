@@ -29,3 +29,6 @@ title_formulas_left_rigts.txt
 title_token_samples.txt
 title_formulas_deps.txt
 title_samples.txt
+print_outs/descriptive_nouns_500_LABELED1.txt
+print_outs/token_log500.txt
+print_outs/token_log500mathml.txt

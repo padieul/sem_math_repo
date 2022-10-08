@@ -2,8 +2,12 @@ from mse import MSE_DBS, MSE_Thread
 import spacy
 import re
 
-TOTAL_COUNT = 0
+import latex2mathml.converter
 
+
+### CATEGORIZATION FUNCTIONS
+#--------------------------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------
 # extracts the tags from each initial post in a thread 
 # and adds them to the thread as a list of strings
 def get_tags_func(db, cl, coll_name, single_post_thread):
@@ -49,6 +53,10 @@ def cat_func(db, cl, coll_name, single_post_thread):
 
     return count
 
+
+### FORMULA EXTRACTION FUNCTIONS 
+#--------------------------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------
 # extract mathematical expressions (formulas) for 
 # each post thread in a collection
 # usage: data.apply_to_each("elementary-set-theory", extract_formulas_func)
@@ -103,8 +111,11 @@ def count_aligns_func(db, cl, coll_name, single_post_thread):
 
     return count
 
-# something 
-#
+### TITLE RELATED FUNCTIONS 
+#--------------------------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------
+# extracts formulas from post thread titels
+# usage: data.apply_to_each("elementary-set-theory", extract_title_formulas)
 def extract_title_formulas(db, cl, coll_name, single_post_thread):
 
     count = 0 
@@ -129,17 +140,76 @@ def extract_title_formulas(db, cl, coll_name, single_post_thread):
     except:
         ...
     
-    
     return count
+
+# prints out extracted titles with parses, formulas and tokenization
+# usage: data.apply_to_each("elementary-set-theory", print_out_titles)
+def print_out_titles(db, cl, coll_name, single_post_thread):
+
+    if single_post_thread["title"]["title_formulas_count"] > 0:
+
+        title = single_post_thread["title"]["title_str"]
+        title_tokenized = single_post_thread["title"]["title_tokenized"]
+        title_formulas = single_post_thread["title"]["title_formulas"]
+        title_formula_tokens = title_formulas.keys()
+
+
+        
+
+        new_title_tokenized = []
+        title_tok_str = ""
+        for token, dep in title_tokenized.items():
+            title_tok_str += (token + " ")
+        nlp = spacy.load("en_core_web_sm")
+        doc = nlp(title_tok_str)
+
+        count = 0
+        for token in doc:
+            if token.text in title_formula_tokens:
+                i = 1
+                while not i == 3:
+                    #token_1 = doc[count - (i+1)].text 
+                    #token_2 = doc[count - (i+2)].text 
+                    #print(token_1)
+                    #print(token_2)
+                    prev_token = doc[count-i]
+                    #print("prev token: " + str(prev_token.text) + " : "+ str(prev_token.pos_))
+                    if not prev_token.pos_ == "SPACE":
+                        if prev_token.pos_ == "NOUN" and not prev_token.text in title_formula_tokens:
+
+                            print("----------------------------------------------------------------------------------------------------")
+                            print(title)
+                            print("formula: " + str(title_formulas[doc[count].text]))
+                            latex_input = str(title_formulas[doc[count].text])
+                            mathml_output = latex2mathml.converter.convert(latex_input)
+                            print(mathml_output)
+                            print("\t" + "prev_token: " + prev_token.text + ": " + str(prev_token.pos_))
+
+                            print("token count: ", len(title_tokenized)) 
+                            print("new token count: ", len(new_title_tokenized))
+
+                            print(title_tokenized)
+                            print(new_title_tokenized)
+                            break
+                    i += 1
+
+                #print("\t" + doc[count-1].text + ": " + str(doc[count-1].pos_))
+                #print("\t" + doc[count-2].text + ": " + str(doc[count-2].pos_))
+            count += 1
+
+        
+        
+
+    return 1
+
+#--------------------------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------
 
 
 if __name__ == "__main__":
     
-    print(TOTAL_COUNT)
     log_file_name = "conf\copy_log.txt"                     # processing log
     db_settings_file_name = "conf\db_conf.json"             # settings file
 
     data = MSE_DBS(db_settings_file_name, log_file_name) 
-    #data.apply_to_each("elementary-set-theory", add_align_formulas_func)
-    data.apply_to_each("elementary-set-theory", extract_title_formulas)
-    print(data.get_count())
+    data.apply_to_each("elementary-set-theory", print_out_titles, limit = 500)

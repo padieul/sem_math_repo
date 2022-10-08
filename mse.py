@@ -158,9 +158,33 @@ class MSE_DBS:
         return db,client
 
 
-    def apply_to_each(self, all_threads_coll_name, func, limit):
+    def apply_to_each_conserve(self, all_threads_coll_name, func, limit):
         counter = 0
         counter_all = 0
+
+        with self._client.start_session() as session:
+            threads_cursor = self._db[all_threads_coll_name].find({}, no_cursor_timeout=True, batch_size=1, session=session)
+            total_count = self._db[all_threads_coll_name].count_documents({})
+            conservation_dict = {}
+            limit_count = 0
+            for post_thread in tqdm(threads_cursor, total = total_count):
+                if limit_count == limit:
+                    break
+                counter_all += 1
+                try:
+                    token_dict = func(self._db, self._client, all_threads_coll_name, conservation_dict, post_thread)
+                except:
+                    continue
+                limit_count += 1
+
+        self._total_count += counter
+        
+        session.end_session()
+        return conservation_dict
+
+
+    def apply_to_each(self, all_threads_coll_name, func, limit):
+        counter = 0
 
         with self._client.start_session() as session:
             threads_cursor = self._db[all_threads_coll_name].find({}, no_cursor_timeout=True, batch_size=1, session=session)
@@ -170,10 +194,8 @@ class MSE_DBS:
             for post_thread in tqdm(threads_cursor, total = total_count):
                 if limit_count == limit:
                     break
-                counter_all += 1
                 try:
-                    #counter += func(self._db, self._client, all_threads_coll_name, token_dict, post_thread)
-                    token_dict = func(self._db, self._client, all_threads_coll_name, token_dict, post_thread)
+                    counter += func(self._db, self._client, all_threads_coll_name, post_thread)
                 except:
                     continue
                 limit_count += 1
@@ -181,7 +203,6 @@ class MSE_DBS:
         self._total_count += counter
         
         session.end_session()
-        return token_dict
 
     def apply_once(self, all_threads_coll_name, func):
         
