@@ -33,7 +33,8 @@ class MSE_Thread:
         return dict(self._posts_formulas)
 
     def _substitute_formulas(self, counter, text):
-        matches = re.findall(r"(<span class=\"math-container\">\$.+?\$</span>)|()|(\$.+?\$)|(\d+ )", text)
+        #matches = re.findall(r"(<span class=\"math-container\">\$.+?\$</span>)|()|(\$.+?\$)|(\d+ )", text)
+        matches = re.findall(r"(<span class=\"math-container\">\$.+?(\$+)</span>)|(begin{align}(?s).+?end{align})|(\$.+?(\$+))|(\d+ )", text)
         
         counter1 = 0
         for match in matches:
@@ -43,10 +44,13 @@ class MSE_Thread:
                     formula_id = "f" + "_" + str(counter) + "_" + str(counter1) + "_" + str(counter2) 
                     text = text.replace(elem, " " + formula_id + " ", 1)
                     elem = elem.replace("<span class=\"math-container\">", "")
+                    elem = elem.replace("begin{align}", "")
+                    elem = elem.replace("end{align}", "")
                     elem = elem.replace("</span>", "")
                     elem = elem.replace("$", "")
                     self._posts_formulas[formula_id] = elem
                     counter2 += 1
+                    break
             counter1 += 1
 
         text = self._filter_out_markup(text)
@@ -161,6 +165,7 @@ class MSE_DBS:
     def apply_to_each_conserve(self, all_threads_coll_name, func, limit):
         counter = 0
         counter_all = 0
+
 
         with self._client.start_session() as session:
             threads_cursor = self._db[all_threads_coll_name].find({}, no_cursor_timeout=True, batch_size=1, session=session)
