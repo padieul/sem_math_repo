@@ -5,7 +5,7 @@ from tqdm import tqdm
 import re
 
 
-class MSE_Thread:
+class PostThread:
 
     def __init__(self, post_thread):
         
@@ -119,108 +119,3 @@ class MSE_Thread:
 
     def get_title_str(self):
         return self._title
-
-
-
-class MSE_DBS:
-
-    def __init__(self, sett_file_path, log_file_path = "conf\\analyzer_log.txt"):
-
-        self._log_file_path = log_file_path
-        self._sett_file_path = sett_file_path 
-
-        sett = self._get_db_settings(self._sett_file_path)
-        self._db, self._client = self._get_mongo_db(sett)
-
-        self._total_count = 0
-
-    def _get_db_settings(self, s_filename):
-
-        with open(s_filename, "r") as f:
-            db_settings = json.load(f)
-        f.close()
-        return db_settings
-
-    def _get_mongo_db(self, settings):
-
-        MONGODB_USER_NAME = settings["username"] 
-        MONGODB_PASSWORD = settings["password"] 
-        MONGODB_HOST = settings["host"] 
-        MONGODB_PORT = settings["port"] 
-        MONGODB_SOURCE = settings["db"]
-        MONGODB_AUTHENTICATION_DB = settings["db"]
-
-        uri_str = "mongodb://" + MONGODB_USER_NAME + ":" + MONGODB_PASSWORD + "@" + MONGODB_HOST + ":" + str(MONGODB_PORT)
-        client = MongoClient(uri_str)
-        
-        try:
-            client.admin.command("ping")
-        except ConnectionFailure: 
-            print("Server not available")
-
-        db = client[MONGODB_AUTHENTICATION_DB]
-        return db,client
-
-
-    def apply_to_each_conserve(self, all_threads_coll_name, func, limit):
-        counter = 0
-        counter_all = 0
-
-
-        with self._client.start_session() as session:
-            threads_cursor = self._db[all_threads_coll_name].find({}, no_cursor_timeout=True, batch_size=1, session=session)
-            total_count = self._db[all_threads_coll_name].count_documents({})
-            conservation_dict = {}
-            limit_count = 0
-            for post_thread in tqdm(threads_cursor, total = total_count):
-                if limit_count == limit:
-                    break
-                counter_all += 1
-                try:
-                    token_dict = func(self._db, self._client, all_threads_coll_name, conservation_dict, post_thread)
-                except:
-                    continue
-                limit_count += 1
-
-        self._total_count += counter
-        
-        session.end_session()
-        return conservation_dict
-
-
-    def apply_to_each(self, all_threads_coll_name, func, limit):
-        counter = 0
-
-        with self._client.start_session() as session:
-            threads_cursor = self._db[all_threads_coll_name].find({}, no_cursor_timeout=True, batch_size=1, session=session)
-            total_count = self._db[all_threads_coll_name].count_documents({})
-            token_dict = {}
-            limit_count = 0
-            for post_thread in tqdm(threads_cursor, total = total_count):
-                if limit_count == limit:
-                    break
-                try:
-                    counter += func(self._db, self._client, all_threads_coll_name, post_thread)
-                except:
-                    continue
-                limit_count += 1
-
-        self._total_count += counter
-        
-        session.end_session()
-
-    def apply_once(self, all_threads_coll_name, func):
-        
-        with self._client.start_session() as session:
-            try:
-                func(self._db, self._client)
-            except:
-                ...
-                
-        session.end_session()
-
-    def get_count(self):
-        return self._total_count
-    
-    
-

@@ -1,0 +1,5 @@
+{
+    "SET": ["set", "subset"], 
+    "SCAL": ["number", "value", "digit"], 
+    "FUNC": ["function", "bijection", "injection", "mapping", "map"]
+}

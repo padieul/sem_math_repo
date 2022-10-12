@@ -1,0 +1,7 @@
+{
+    "\\mathbb N": "SET", 
+    "\\mathbb Q": "SET", 
+    "\\mathbb{N}": "SET", 
+    "\\mathbb{Q}": "SET"
+
+}

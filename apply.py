@@ -1,4 +1,5 @@
-from mse import MSE_DBS, MSE_Thread
+from mse_db import MSE_DBS
+from sem_math import PostThread, FormulaContextType
 import spacy
 import re
 
@@ -64,7 +65,7 @@ def extract_formulas_func(db, cl, coll_name, single_post_thread):
 
     count = 0 
     _id = single_post_thread["_id"]
-    mse_th_obj = MSE_Thread(single_post_thread) 
+    mse_th_obj = PostThread(single_post_thread) 
     formulas = mse_th_obj.get_formulas()
     formulas_count = len(formulas)
     tokenized_thread = mse_th_obj.get_tokenized_text() 
@@ -125,7 +126,7 @@ def extract_aligns_func(db, cl, coll_name, single_post_thread):
         if align_str in post:
             print(single_post_thread["_id"])
             _id = single_post_thread["_id"]
-            mse_th_obj = MSE_Thread(single_post_thread) 
+            mse_th_obj = PostThread(single_post_thread) 
             formulas = mse_th_obj.get_formulas()
             formulas_count = len(formulas)
             tokenized_thread = mse_th_obj.get_tokenized_text() 
@@ -150,7 +151,7 @@ def extract_title_formulas(db, cl, coll_name, single_post_thread):
 
     count = 0 
     _id = single_post_thread["_id"]
-    mse_th_obj = MSE_Thread(single_post_thread) 
+    mse_th_obj = PostThread(single_post_thread) 
 
     title_str = mse_th_obj.get_title_str()
     title_formulas = mse_th_obj.get_title_formulas()
@@ -182,9 +183,6 @@ def print_out_titles_context(db, cl, coll_name, single_post_thread):
         title_tokenized = single_post_thread["title"]["title_tokenized"]
         title_formulas = single_post_thread["title"]["title_formulas"]
         title_formula_tokens = title_formulas.keys()
-
-
-        
 
         new_title_tokenized = []
         title_tok_str = ""
@@ -233,59 +231,86 @@ def print_out_titles_context(db, cl, coll_name, single_post_thread):
 # prints out extracted text bodys with parses, formulas and tokenization
 # usage: data.apply_to_each("elementary-set-theory", print_out_titles)
 def print_out_posts_context(db, cl, coll_name, single_post_thread):
+    total_formula_count = single_post_thread["formulas_count"]
+    noun_formula_count = 0
 
-    if single_post_thread["title"]["title_formulas_count"] > 0:
-
-        title = single_post_thread["title"]["title_str"]
-        title_tokenized = single_post_thread["title"]["title_tokenized"]
-        title_formulas = single_post_thread["title"]["title_formulas"]
-        title_formula_tokens = title_formulas.keys()
-
-
-        
-
-        new_title_tokenized = []
-        title_tok_str = ""
-        for token, dep in title_tokenized.items():
-            title_tok_str += (token + " ")
+    if single_post_thread["formulas_count"] > 0:
         nlp = spacy.load("en_core_web_sm")
-        doc = nlp(title_tok_str)
 
-        count = 0
-        for token in doc:
-            if token.text in title_formula_tokens:
-                i = 1
-                while not i == 3:
-                    #token_1 = doc[count - (i+1)].text 
-                    #token_2 = doc[count - (i+2)].text 
-                    #print(token_1)
-                    #print(token_2)
-                    prev_token = doc[count-i]
-                    #print("prev token: " + str(prev_token.text) + " : "+ str(prev_token.pos_))
-                    if not prev_token.pos_ == "SPACE":
-                        if prev_token.pos_ == "NOUN" and not prev_token.text in title_formula_tokens:
+        tokenized_posts = single_post_thread["tokenized_posts"]
+        formulas_dict = single_post_thread["formulas"]
+        formulas_dict_tokens = single_post_thread["formulas"].keys()
 
-                            print("----------------------------------------------------------------------------------------------------")
-                            print(title)
-                            print("formula: " + str(title_formulas[doc[count].text]))
-                            latex_input = str(title_formulas[doc[count].text])
-                            mathml_output = latex2mathml.converter.convert(latex_input)
-                            print(mathml_output)
-                            print("\t" + "prev_token: " + prev_token.text + ": " + str(prev_token.pos_))
+        for post in tokenized_posts:
+            new_post_tokenized = [] 
+            new_post_str = ""
+            for token in post:
+                new_post_str += (token + " ")
+            doc = nlp(new_post_str)
 
-                            print("token count: ", len(title_tokenized)) 
-                            print("new token count: ", len(new_title_tokenized))
+            count = 0
+            for token in doc:
+                if token.text in formulas_dict_tokens:
 
-                            print(title_tokenized)
-                            print(new_title_tokenized)
-                            break
-                    i += 1
+                    token_list = []
+                    formula_token = token.text
 
-                #print("\t" + doc[count-1].text + ": " + str(doc[count-1].pos_))
-                #print("\t" + doc[count-2].text + ": " + str(doc[count-2].pos_))
-            count += 1
+                    for i in range(count-5, count+5, 1):
+                        if i == count or i < 0:
+                            continue
+                        token_list.append(doc[i].text)
+                        formula_c_type = FormulaContextType(token_list, "kb/type_context_keywords.json",  formula_token, formula_dict_tokens, 3)
+                        if formula_c_type.has_pos_in_window("NOUN", interval="left"):
+                            if not formula_c_type.has_pos_between_formula_and_other("PREP", other_tag="NOUN"):
+                                formula_c_type.print_context()
 
-    return 1
+
+
+
+                    ### old
+                    for i in range(count-3, count+1, 1):
+                        if i == count or i < 0:
+                            continue
+                        sel_token = doc[i] 
+                        if sel_token.pos_ == "NOUN" and \
+                           not sel_token.text in formulas_dict_tokens:
+                            
+                            has_prep_between = False
+                            if i > count:
+                                for j in range(count+1,i):
+                                    if doc[j].pos == "prep":
+                                        has_prep_between = True
+                            elif i < count:
+                                for j in range(i+1,count):
+                                    if doc[j].pos == "prep":
+                                        has_prep_between = True
+
+                            if not has_prep_between:
+                                print("----------------------------------------------------------------------------------------------------")
+                                sent_str = ""
+                                for post_token in post:
+                                    if "?" in post_token or \
+                                    "." in post_token or \
+                                    "!" in post_token:
+                                        print(sent_str)
+                                        sent_str = ""
+                                    else:
+                                        sent_str += (post_token + " ")
+                                print("*********************")
+                                print("formula: " + str(formulas_dict[doc[count].text]))
+                                for i in range(count - 3, count + 3, 1):
+                                    print("\t" + "sel_token: " + str(doc[i].text) + ": " + str(doc[i].pos_) + ": " + str(doc[i].dep_))
+
+                            noun_formula_count += 1
+                            break 
+                        ### old
+
+                count += 1
+
+        print("NOUN FORMULA COUNT: ", str(noun_formula_count))
+        print("TOTAL FORMULA COUNT: ", str(total_formula_count))
+    
+    return noun_formula_count
 
 
 #--------------------------------------------------------------------------------------------------------------------
@@ -298,8 +323,7 @@ if __name__ == "__main__":
     db_settings_file_name = "conf\db_conf.json"             # settings file
 
     data = MSE_DBS(db_settings_file_name, log_file_name) 
-    print("algebra-precalculus")
-    print("1. extract formulas from body: ")
-    data.apply_to_each("algebra-precalculus", extract_formulas_func, limit = -1)
-    print("2. extract titles: ")
-    data.apply_to_each("algebra-precalculus", extract_title_formulas, limit = -1)
+
+    data.apply_to_each("elementary-set-theory", print_out_posts_context, limit = 100)
+    print("TOTAL ---- NOUN_FORMULA_COUNT: ", str(data.get_count()))
+   
