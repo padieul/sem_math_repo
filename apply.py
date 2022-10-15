@@ -232,89 +232,69 @@ def print_out_titles_context(db, cl, coll_name, single_post_thread):
 # usage: data.apply_to_each("elementary-set-theory", print_out_titles)
 def print_out_posts_context(db, cl, coll_name, single_post_thread):
     total_formula_count = single_post_thread["formulas_count"]
-    noun_formula_count = 0
+    met_criteria_formula_count = 0
 
     if single_post_thread["formulas_count"] > 0:
-        nlp = spacy.load("en_core_web_sm")
 
         tokenized_posts = single_post_thread["tokenized_posts"]
         formulas_dict = single_post_thread["formulas"]
         formulas_dict_tokens = single_post_thread["formulas"].keys()
+        print("POST_THREAD #", single_post_thread["_id"])
+        print("*********************************************************************")
 
         for post in tokenized_posts:
-            new_post_tokenized = [] 
-            new_post_str = ""
-            for token in post:
-                new_post_str += (token + " ")
-            doc = nlp(new_post_str)
 
             count = 0
-            for token in doc:
-                if token.text in formulas_dict_tokens:
-
+            for token in post:
+                if token in formulas_dict_tokens:
+                    if token == "f_1_2_0" and formulas_dict[token] == "A":
+                        print("some")
+                
                     token_list = []
-                    formula_token = token.text
-
-                    for i in range(count-5, count+5, 1):
-                        if i == count or i < 0:
-                            continue
-                        token_list.append(doc[i].text)
-                        formula_c_type = FormulaContextType(token_list, "kb/type_context_keywords.json",  formula_token, formula_dict_tokens, 3)
-                        if formula_c_type.has_pos_in_window("NOUN", interval="left"):
-                            if not formula_c_type.has_pos_between_formula_and_other("PREP", other_tag="NOUN"):
-                                formula_c_type.print_context()
-
-
-
-
-                    ### old
-                    for i in range(count-3, count+1, 1):
-                        if i == count or i < 0:
-                            continue
-                        sel_token = doc[i] 
-                        if sel_token.pos_ == "NOUN" and \
-                           not sel_token.text in formulas_dict_tokens:
-                            
-                            has_prep_between = False
-                            if i > count:
-                                for j in range(count+1,i):
-                                    if doc[j].pos == "prep":
-                                        has_prep_between = True
-                            elif i < count:
-                                for j in range(i+1,count):
-                                    if doc[j].pos == "prep":
-                                        has_prep_between = True
-
-                            if not has_prep_between:
-                                print("----------------------------------------------------------------------------------------------------")
-                                sent_str = ""
-                                for post_token in post:
-                                    if "?" in post_token or \
-                                    "." in post_token or \
-                                    "!" in post_token:
-                                        print(sent_str)
-                                        sent_str = ""
-                                    else:
-                                        sent_str += (post_token + " ")
-                                print("*********************")
-                                print("formula: " + str(formulas_dict[doc[count].text]))
-                                for i in range(count - 3, count + 3, 1):
-                                    print("\t" + "sel_token: " + str(doc[i].text) + ": " + str(doc[i].pos_) + ": " + str(doc[i].dep_))
-
-                            noun_formula_count += 1
-                            break 
-                        ### old
-
+                    formula_token = token
+                    try:
+                        for i in range(count-5, count+5, 1):
+                            if i < 0 or i > (len(post) - 1):
+                                continue
+                            token_list.append(post[i]) 
+                    except Exception as e:
+                        print("some")
+                    
+                    formula_c_type = FormulaContextType("kb/type_context_keywords.json", token_list, formula_token, formulas_dict, 3)
+                    if formula_c_type.has_pos_in_window("NOUN", interval="left"):
+                        if not formula_c_type.has_pos_between_formula_and_other("PREP", other_tag="NOUN"):
+                            formula_c_type.print_context()
+                            met_criteria_formula_count += 1
+                    
+                    
                 count += 1
 
-        print("NOUN FORMULA COUNT: ", str(noun_formula_count))
+        print("met_criteria_formula_count: ", str(met_criteria_formula_count))
         print("TOTAL FORMULA COUNT: ", str(total_formula_count))
     
-    return noun_formula_count
+    return met_criteria_formula_count
+
+
+### Type extraction from formulas and contexts
+#--------------------------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------
+
 
 
 #--------------------------------------------------------------------------------------------------------------------
 #--------------------------------------------------------------------------------------------------------------------
+
+### Statistics
+#--------------------------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------
+def count_all_formulas(db, cl, coll_name, single_post_thread):
+    formulas_count = single_post_thread["formulas_count"]
+    return formulas_count
+
+
+#--------------------------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------
+
 
 
 if __name__ == "__main__":
@@ -324,6 +304,8 @@ if __name__ == "__main__":
 
     data = MSE_DBS(db_settings_file_name, log_file_name) 
 
-    data.apply_to_each("elementary-set-theory", print_out_posts_context, limit = 100)
-    print("TOTAL ---- NOUN_FORMULA_COUNT: ", str(data.get_count()))
-   
+    data.apply_to_each("elementary-set-theory", print_out_posts_context, limit = 2000)
+    print("TOTAL ---- MET CONDITIONS FORMULA_COUNT: ", str(data.get_count()))
+    data.reset_count()
+    data.apply_to_each("elementary-set-theory", count_all_formulas, limit = 2000)
+    print("TOTAL ---- ALL FORMULAS: ", str(data.get_count()))

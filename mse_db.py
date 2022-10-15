@@ -223,6 +223,9 @@ class MSE_DBS:
 
     def get_count(self):
         return self._total_count
+
+    def reset_count(self):
+        self._total_count = 0
     
     
 

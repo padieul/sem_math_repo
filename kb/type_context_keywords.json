@@ -1,5 +1,14 @@
 {
-    "SET": ["set", "subset"], 
-    "SCAL": ["number", "value", "digit"], 
-    "FUNC": ["function", "bijection", "injection", "mapping", "map"]
+    "set": "SET", 
+    "subset": "SET", 
+    "number": "SCAL", 
+    "value": "SCAL", 
+    "digit": "SCAL",
+    "constant": "SCAL",
+    "fraction": "SCAL",
+    "function": "FUNC", 
+    "bijection": "FUNC", 
+    "injection": "FUNC", 
+    "mapping": "FUNC", 
+    "map": "FUNC"
 }

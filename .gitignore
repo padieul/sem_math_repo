@@ -36,3 +36,7 @@ print_outs/align_ids.txt
 print_outs/descriptive_nouns_body_10.txt
 .gitignore
 print_outs/descriptive_nouns_body_100.txt
+*.pyc
+print_outs/descriptive_nouns_body_10_new_WITHPREP.txt
+print_outs/descriptive_nouns_body_10_new.txt
+print_outs/descriptive_nouns_body_5000_new.txt
