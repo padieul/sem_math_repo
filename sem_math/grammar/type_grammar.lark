@@ -1,0 +1,39 @@
+?value: func 
+      | set
+
+func: func_expr | func_id
+
+func_expr: func_head colon map
+colon: ":" | "\\colon"
+func_head: func_id | func_enumeration
+map: set to set
+func_id: LETTER
+
+to: "\\to" | "\\rightarrow"
+
+set:  UPPER_LETTER
+     | complexset 
+     | explset 
+     | set_constant
+     | set cart_product set 
+     | settopowerofset
+complexset: UPPER_LETTER | INT ["^"][UPPER_LETTER | INT]
+explset: "\\{" [enumeration] "\\}"
+set_constant: "\\mathbb{" ITEM "}"
+cart_product: "\\times"
+settopowerofset: set "^" "{" 
+
+// enumerations 
+enumeration: ITEM comma ITEM [(comma ITEM)*]
+func_enumeration: func_id comma func_id [(comma func_id)*]
+ITEM: LETTER | INT 
+comma: ","
+
+UPPER_LETTER: "A".."Z"
+%import common.LETTER
+%import common.NUMBER
+%import common.INT
+%import common.WS
+%import common._STRING_ESC_INNER
+%import .some.genumeration
+%ignore WS
