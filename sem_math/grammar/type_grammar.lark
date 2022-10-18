@@ -3,38 +3,66 @@
 
 func: func_expr | func_id
 
-func_expr: func_head colon map
-colon: ":" | "\\colon"
+func_expr: func_head COLON map
+COLON: ":" | "\\colon"
 func_head: func_id | func_enumeration
 map: set to set
 func_id: LETTER
 
 to: "\\to" | "\\rightarrow"
 
-set:  UPPER_LETTER
-     | complexset 
-     | explset 
-     | set_constant
-     | set cart_product set 
+set: explset 
+   | set_expr
+   | SET_CONSTANT
+
 
 complexset: UPPER_LETTER | INT ["^"][UPPER_LETTER | INT]
-explset: "\\{" [enumeration] "\\}"
-set_constant: "\\mathbb{" ITEM "}"
-cart_product: "\\times"
-//settopowerofset: set "^" "{" 
+explset: L_BRACE_LITERAL [set_enumeration] R_BRACE_LITERAL
+set_expr: (set_expr (SET_OPERATOR_SET|OP_TO_SET_POW) set_expr) ((SET_OPERATOR_SET|OP_TO_SET_POW) set_expr)*
+         | (L_PAREN set_expr R_PAREN ) 
+         | (INT OP_TO_SET_POW set_expr) | (set_expr OP_TO_SET_POW INT)
+         | set_atom 
+         | SET_CONSTANT 
+set_enumeration: enumeration
+set_atom: UPPER_LETTER
+
 
 // enumerations 
 enumeration: ITEM comma ITEM [(comma ITEM)*]
 func_enumeration: func_id comma func_id [(comma func_id)*]
-ITEM: LETTER | INT 
+ITEM: LETTER 
+     | INT 
+     | SET_CONSTANT 
 comma: ","
 
+
+
+
+
+L_PAREN: "("
+R_PAREN: ")"
+L_BRACE: "{"
+R_BRACE: "}"
+L_BRACE_LITERAL: "\\{"
+R_BRACE_LITERAL: "\\}"
+L_BRACKET: "["
+R_BRACKET: "]"
+
+CMD_TIMES: "\\times"
+CMD_CDOT: "\\cdot"
+CMD_DIV: "\\div"
+CMD_FRAC: "\\frac"
+        | "\\dfrac"
+        | "\\tfrac"
+CMD_BINOM: "\\binom"
+CMD_DBINOM: "\\dbinom"
+CMD_TBINOM: "\\tbinom"
+
+
 UPPER_LETTER: "A".."Z"
+
 %ignore WS
 %ignore NEWLINE
-%import common.LETTER
-%import common.NUMBER
-%import common.INT
-%import common (WS, NEWLINE)
-%import common._STRING_ESC_INNER
-%import .functions.func_normal -> func_basic
+%import common (WS, NEWLINE, INT,  LETTER)
+%import .sets (SET_CONSTANT, SETARB_OPERATOR_BOOL, SETSET_OPERATOR_BOOL, SET_OPERATOR_SET, OP_TO_SET_POW)
+%import .functions.FUNC_NORMAL 

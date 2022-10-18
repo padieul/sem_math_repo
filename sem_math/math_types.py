@@ -10,7 +10,6 @@ class FormulaType:
 
     def __init__(self, latex_str):
 
-        print(os.getcwd())
         self._latex_str = latex_str
         self._grammar_file = "sem_math/grammar/type_grammar.lark"
         self._parsed_structure = None
@@ -38,13 +37,12 @@ class FormulaType:
 
     @classmethod
     def read_parser_grammar(cls, file_path):
-        print(os.getcwd())
         grammar_str = "" 
         file = open(file_path, mode="r") 
         grammar_str = file.read() 
         file.close()
-        cls.type_parser = Lark(grammar_str, start="value",source_path = "C:\\Users\\prdie\\OneDrive\\Sources\\sem_math_repo\\sem_math", 
-                                                          import_paths = ["C:\\Users\\prdie\\OneDrive\\Sources\\sem_math_repo\\sem_math\\grammar\\"])
+        cls.type_parser = Lark(grammar_str, start="value", source_path = "C:\\Users\\prdie\\OneDrive\\Sources\\sem_math_repo\\sem_math", 
+                                                           import_paths = ["C:\\Users\\prdie\\OneDrive\\Sources\\sem_math_repo\\sem_math\\grammar\\"])
     def get_parsed_structure(self, text):
         self._parsed_structure = FormulaType.type_parser.parse(text)
 

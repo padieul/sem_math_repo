@@ -1,4 +1,4 @@
-func_normal : FUNC_EXP
+FUNC_NORMAL : FUNC_EXP
 	        | FUNC_LOG
 	        | FUNC_LG
 	        | FUNC_LN
