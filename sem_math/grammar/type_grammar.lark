@@ -16,12 +16,12 @@ set:  UPPER_LETTER
      | explset 
      | set_constant
      | set cart_product set 
-     | settopowerofset
+
 complexset: UPPER_LETTER | INT ["^"][UPPER_LETTER | INT]
 explset: "\\{" [enumeration] "\\}"
 set_constant: "\\mathbb{" ITEM "}"
 cart_product: "\\times"
-settopowerofset: set "^" "{" 
+//settopowerofset: set "^" "{" 
 
 // enumerations 
 enumeration: ITEM comma ITEM [(comma ITEM)*]
@@ -30,10 +30,11 @@ ITEM: LETTER | INT
 comma: ","
 
 UPPER_LETTER: "A".."Z"
+%ignore WS
+%ignore NEWLINE
 %import common.LETTER
 %import common.NUMBER
 %import common.INT
-%import common.WS
+%import common (WS, NEWLINE)
 %import common._STRING_ESC_INNER
-%import .some.genumeration
-%ignore WS
+%import .functions.func_normal -> func_basic

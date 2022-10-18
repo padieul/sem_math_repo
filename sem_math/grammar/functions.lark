@@ -1,0 +1,48 @@
+func_normal : FUNC_EXP
+	        | FUNC_LOG
+	        | FUNC_LG
+	        | FUNC_LN
+	        | FUNC_SIN
+	        | FUNC_COS
+	        | FUNC_TAN
+	        | FUNC_CSC
+	        | FUNC_SEC
+	        | FUNC_COT
+	        | FUNC_ARCSIN
+	        | FUNC_ARCCOS
+	        | FUNC_ARCTAN
+	        | FUNC_ARCCSC
+	        | FUNC_ARCSEC
+	        | FUNC_ARCCOT
+	        | FUNC_SINH
+	        | FUNC_COSH
+	        | FUNC_TANH
+	        | FUNC_ARSINH
+	        | FUNC_ARCOSH
+	        | FUNC_ARTANH
+
+
+FUNC_EXP: "\\exp"
+FUNC_LOG: "\\log"
+FUNC_LG: "\\lg"
+FUNC_LN: "\\ln"
+FUNC_SIN: "\\sin"
+FUNC_COS: "\\cos"
+FUNC_TAN: "\\tan"
+FUNC_CSC: "\\csc"
+FUNC_SEC: "\\sec"
+FUNC_COT: "\\cot"
+
+FUNC_ARCSIN: "\\arcsin"
+FUNC_ARCCOS: "\\arccos"
+FUNC_ARCTAN: "\\arctan"
+FUNC_ARCCSC: "\\arccsc"
+FUNC_ARCSEC: "\\arcsec"
+FUNC_ARCCOT: "\\arccot"
+
+FUNC_SINH: "\\sinh"
+FUNC_COSH: "\\cosh"
+FUNC_TANH: "\\tanh"
+FUNC_ARSINH: "\\arsinh"
+FUNC_ARCOSH: "\\arcosh"
+FUNC_ARTANH: "\\artanh"

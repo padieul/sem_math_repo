@@ -1,75 +1,52 @@
-import latex2mathml.converter
-from latex2sympy2 import latex2sympy, latex2latex
 import spacy 
 import json
+from lark import Lark
+import os
 
-
-
-
-# 1. absolute type: \mathbb{R} -> real number set
-# 2. possible type candidates: f, n 
-# 3. ...
-
-functions_ex  = [   #"f", \
-                    #"f = g \\circ g", \
-                    #"F\\colon A\\times A\\to A", \
-                    #"f : \\mathbb{Q} \\rightarrow \\{1,2,3\}", \
-                    #"f(A)=B", \g(Y-B) # X - A
-                    "f,g:A\\to A" ]               
-                    #"f: X \\to 2^Y", \
-                    #"f(x) = (x^2, \\sin x)", \
-                    #"f:A^{B\\;\\cup\\; C}\\to A^B\\times A^C", \
-                    #"f,g:A\\to A"]
-
-"""
-set = [  "\cal P^n(\Bbb N)", \
-         "\mathbb{N}", \
-         "S", \
-         "S \\times S", \
-         "\mathbb R^{2}", \
-         "Z", "W", "A", "X", "Y", \
-         "S", "\mathbb{R}", "\mathbb{R}^2", \
-         "E", "", "", "", "", ""]
-
-
-scal = [ "n", \
-         "(2n+1)", \
-         "\\frac{n!}{(n-k)!}", \
-         ]
-
-BOOL = ["", 
-        ""]
-
-UNK = [ "\left \{ 0,1 \right \}^{\mathbb{N}}\sim \left \{ 0,1,2,3 \right \}^{\mathbb{N}}", \
-        "(x,y)\in l", \
-        "x, y \in \mathbb Q", \
-        "A \subseteq X", \
-        "B\subseteq Y", \
-        "f(A)=B", \
-        "g(Y-B)=X-A",  \
-        "Z\cup W\sim W", \
-        "\#A = n", \
-        "\omega", \
-        "|X|=|Y|=|X-Y|=\kappa", \
-        "\omega^*", \
-        "", \
-        ""]
-
-"""
-
-def get_math_ml(tex_str):
-    mathml_output = latex2mathml.converter.convert(tex_str)
-    return mathml_output
 
 
 class FormulaType:
+    type_parser = None
 
     def __init__(self, latex_str):
 
+        print(os.getcwd())
         self._latex_str = latex_str
+        self._grammar_file = "sem_math/grammar/type_grammar.lark"
+        self._parsed_structure = None
+        FormulaType.read_parser_grammar(self._grammar_file)
         self._math_type = "UNK"
-        self._math_type_candidates = []
 
+    def print_parsed_formula(self):
+        print("--------------------------------------------")
+        print("Tree data: ", self._parsed_structure.data)
+        print("Tree data children: ", self._parsed_structure.children)
+        print(self._parsed_structure.pretty())
+
+    def determine_formula_type(self):
+        try:
+            self._parsed_structure = FormulaType.type_parser.parse(self._latex_str)
+            if self._parsed_structure.data == "func":
+                self._math_type = "FUNC"
+            elif self._parsed_structure.data == "set":
+                self._math_type = "SET"
+            elif self._parsed_structure.data == "scal":
+                self._math_type = "SCAL" 
+        except Exception as e:
+            some_val = e
+            self._math_type = "UNK"
+
+    @classmethod
+    def read_parser_grammar(cls, file_path):
+        print(os.getcwd())
+        grammar_str = "" 
+        file = open(file_path, mode="r") 
+        grammar_str = file.read() 
+        file.close()
+        cls.type_parser = Lark(grammar_str, start="value",source_path = "C:\\Users\\prdie\\OneDrive\\Sources\\sem_math_repo\\sem_math", 
+                                                          import_paths = ["C:\\Users\\prdie\\OneDrive\\Sources\\sem_math_repo\\sem_math\\grammar\\"])
+    def get_parsed_structure(self, text):
+        self._parsed_structure = FormulaType.type_parser.parse(text)
 
     def get_math_type(self):
         return self._math_type
@@ -139,8 +116,6 @@ class FormulaContextType:
 
         return has_prep_between
 
-
-
     def print_context(self, with_tags = True):
 
         print("----------------------------------------------------------------------------------------------------")
@@ -149,8 +124,6 @@ class FormulaContextType:
         print("MATH-TYPE: ", str(self.get_math_type()))
         for tok in self._context_doc:
             print("\t" + "sel_token: " + str(tok.text) + ": " + str(tok.pos_) + ": " + str(tok.dep_))
-
-
 
     def get_math_type(self, evaluate=True):
         if evaluate == True:
@@ -176,13 +149,25 @@ class FormulaContextType:
         return data
 
 
-if __name__ == "__main__":
-    
-    print(get_math_ml("\mathbb{N}"))
-   
-    for elem_expr in functions_ex:
-        if elem_expr == "f = g \\circ g":
-            continue
 
-        expr = latex2sympy(elem_expr)
-        print(expr)
+
+
+if __name__ == "__main__":
+    type_strs = []
+    func_strs = [   "f", \
+                    "f : X \\to 2^Y", \
+                    "f : X \\to \{1,2,3\}", \
+                    "f : \\mathbb{Q} \\rightarrow \\{1,2,3\\}", \
+                    "F\\colon A\\times A\\to A",  \
+                    "f,g:A\\to A", \
+                ]   
+    answer_strs = ["FUNC" for i in range(len(func_strs))]
+
+    for st in func_strs:
+        pars = FormulaType(st)
+            
+        pars.determine_formula_type()
+        type_strs.append(pars.get_math_type())
+    print(func_strs)
+    print(type_strs) 
+    print(answer_strs)
