@@ -26,6 +26,7 @@ SET_RATIONAL:  "\\mathbb{Q}"
 SET_ALGEBRAIC: "\\mathbb{A}"
 SET_REAL:      "\\mathbb{R}"
 SET_COMPLEX:   "\\mathbb{C}"
+SET_FAT:       "\\mathbb"
 
 OP_UNION .2 :       "\\cup"
 OP_INTERSEC .2 :    "\\cap"

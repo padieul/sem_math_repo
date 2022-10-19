@@ -7,12 +7,14 @@
 func: func_def
     | func_expr 
     | func_name
+    | func_composed
 
 func_def: func_names COLON map
 map: set TO set
 func_names: func_name | func_enumeration
 func_enumeration: func_name COMMA func_name [(COMMA func_name)*]
-func_name: LETTER
+func_composed: func_name OP_FUNC_COMP func_name (OP_FUNC_COMP func_name)*
+func_name: LETTER | FUNC_NORMAL
 
 func_expr: func_name_arg EQUAL expr 
 func_name_arg: func_name L_PAREN func_arg R_PAREN
@@ -56,24 +58,30 @@ expr_atom: LOWER_LETTER
          | binom
 
 frac: CMD_FRAC (L_BRACE expr R_BRACE) (L_BRACE expr R_BRACE)
+    | (expr DIV expr)
 
 binom: (CMD_BINOM | CMD_DBINOM | CMD_TBINOM) ( L_BRACE expr R_BRACE ) (L_BRACE expr R_BRACE)
 
 // EXPRESSIONS THAT INVOLVE MATHEMATICAL SETS
 //
 set: explset 
-   | set_expr
+   | set_expr 
+   | interval
    | SET_CONSTANT
 
 complexset: UPPER_LETTER | INT ["^"][UPPER_LETTER | INT]
-explset: L_BRACE_LITERAL [set_enumeration] R_BRACE_LITERAL
+explset: L_BRACE_LITERAL ([set_enumeration] | ITEM) R_BRACE_LITERAL
+
 set_expr: (set_expr (SET_OPERATOR_SET|OP_TO_SET_POW) set_expr) ((SET_OPERATOR_SET|OP_TO_SET_POW) set_expr)*
          | (L_PAREN set_expr R_PAREN ) 
          | (INT OP_TO_SET_POW set_expr) | (set_expr OP_TO_SET_POW INT)
+         | set_constant_custom
          | set_atom 
-         | SET_CONSTANT 
 set_enumeration: enumeration
-set_atom: UPPER_LETTER
+set_atom: UPPER_LETTER | SET_CONSTANT
+set_constant_custom: [SET_FAT] UPPER_LETTER [CARET (expr_atom | L_BRACE expr R_BRACE) subexpr? | comp]
+
+interval: (L_BRACKET | L_PAREN) expr_atom COMMA expr_atom (R_BRACKET | R_PAREN)
 
 
 // enumerations 
@@ -98,6 +106,7 @@ BAR: "|"
 CARET: "^"
 UNDERSCORE: "_"
 
+OP_FUNC_COMP: "\\circ"
 
 EQUAL: "="
 TO: "\\to" | "\\rightarrow"
@@ -129,5 +138,5 @@ LOWER_LETTER: "a".."z"
 %ignore WS
 %ignore NEWLINE
 %import common (WS, NEWLINE, INT, LETTER, SIGNED_NUMBER)
-%import .sets (SET_CONSTANT, SETARB_OPERATOR_BOOL, SETSET_OPERATOR_BOOL, SET_OPERATOR_SET, OP_TO_SET_POW)
+%import .sets (SET_CONSTANT, SETARB_OPERATOR_BOOL, SETSET_OPERATOR_BOOL, SET_OPERATOR_SET, OP_TO_SET_POW, SET_FAT)
 %import .functions.FUNC_NORMAL 
