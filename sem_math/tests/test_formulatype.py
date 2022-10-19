@@ -19,7 +19,7 @@ class Test_FormulaType(unittest.TestCase):
                         "(A \\cap B) \\cup C ", \
                         "(S \\times B) \\cup C^G", \
                         "S \\cup S \\cup S", \
-                        "(A \\cup B) \\times (D \\cap C)"
+                        "(A \\cup B) \\times (D \\cap C)", \
                    ]   
         answer_strs = ["SET" for i in range(len(set_strs))]
 
@@ -49,10 +49,22 @@ class Test_FormulaType(unittest.TestCase):
         self.assertEqual(type_strs, answer_strs)
 
 
-    def test_for_scal_type(self):
-        TYPE = "SCAL"
+    def test_for_unk_type(self):
+        TYPE = "UNK"
         type_strs = []
-        test_strs = []   
+        test_strs = [
+                        "\left \{ 0,1 \right \}^{\mathbb{N}}\sim \left \{ 0,1,2,3 \right \}^{\mathbb{N}}", \
+                        "(x,y)\in l", \
+                        "x, y \in \mathbb Q", \
+                        "A \subseteq X", \
+                        "B\subseteq Y", \
+                        "f(A)=B", \
+                        "g(Y-B)=X-A",  \
+                        "Z\cup W\sim W", \
+                        "\#A = n", \
+                        "|X|=|Y|=|X-Y|=\kappa", \
+                        "\omega^*", \
+                    ]   
         answer_strs = [TYPE for i in range(len(test_strs))]
 
         for st in test_strs:
@@ -62,10 +74,16 @@ class Test_FormulaType(unittest.TestCase):
         self.assertEqual(type_strs, answer_strs)
 
 
-    def test_for_unk_type(self):
-        TYPE = "UNK"
+    def test_for_scal_type(self):
+        TYPE = "SCAL"
         type_strs = []
-        test_strs = []   
+        test_strs = [   
+                        "(2n+1)", \
+                        "\\frac{n!}{(n-k)!}", \
+                        "(b + 2 \cdot a + d \cdot g + 3^{8})", \
+                        "\\binom{k+3}{n-1}", \
+                        "(b+ c \cdot b) \cdot (a + b \cdot x)"
+                    ]   
         answer_strs = [TYPE for i in range(len(test_strs))]
 
         for st in test_strs:

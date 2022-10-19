@@ -1,20 +1,69 @@
 ?value: func 
       | set
+      | scal
 
-func: func_expr | func_id
+// EXPESSIONS THAT INVOLVE MATHEMATICAL FUNCTIONS
+//
+func: func_def
+    | func_expr 
+    | func_name
 
-func_expr: func_head COLON map
-COLON: ":" | "\\colon"
-func_head: func_id | func_enumeration
-map: set to set
-func_id: LETTER
+func_def: func_names COLON map
+map: set TO set
+func_names: func_name | func_enumeration
+func_enumeration: func_name COMMA func_name [(COMMA func_name)*]
+func_name: LETTER
 
-to: "\\to" | "\\rightarrow"
+func_expr: func_name_arg EQUAL expr 
+func_name_arg: func_name L_PAREN func_arg R_PAREN
+func_arg: LOWER_LETTER 
+        | SIGNED_NUMBER 
+        | ( func_arg COMMA func_arg [(COMMA func_arg)*] )
 
+
+// EXPRESSION
+//
+scal: expr
+expr:  additive 
+additive: (additive (ADD | SUB) additive) | mp
+
+mp: mp (MUL | CMD_TIMES | CMD_CDOT | DIV | CMD_DIV | COLON) mp 
+  | unary
+
+unary: (ADD | SUB) unary | postfix+ 
+
+postfix: exp postfix_op*  
+
+postfix_op: BANG | eval_at
+
+eval_at: BAR (eval_at_sup | eval_at_sub | eval_at_sup eval_at_sub)
+
+eval_at_sub: UNDERSCORE L_BRACE (expr | equality) R_BRACE
+eval_at_sup: CARET L_BRACE (expr | equality) R_BRACE
+
+equality: expr EQUAL expr
+
+exp: exp CARET (expr_atom | L_BRACE expr R_BRACE) subexpr? | comp
+
+subexpr: UNDERSCORE (expr_atom | L_BRACE expr R_BRACE)
+
+comp: expr_atom 
+    | group
+
+expr_atom: LOWER_LETTER 
+         | SIGNED_NUMBER
+         | frac 
+         | binom
+
+frac: CMD_FRAC (L_BRACE expr R_BRACE) (L_BRACE expr R_BRACE)
+
+binom: (CMD_BINOM | CMD_DBINOM | CMD_TBINOM) ( L_BRACE expr R_BRACE ) (L_BRACE expr R_BRACE)
+
+// EXPRESSIONS THAT INVOLVE MATHEMATICAL SETS
+//
 set: explset 
    | set_expr
    | SET_CONSTANT
-
 
 complexset: UPPER_LETTER | INT ["^"][UPPER_LETTER | INT]
 explset: L_BRACE_LITERAL [set_enumeration] R_BRACE_LITERAL
@@ -28,16 +77,32 @@ set_atom: UPPER_LETTER
 
 
 // enumerations 
-enumeration: ITEM comma ITEM [(comma ITEM)*]
-func_enumeration: func_id comma func_id [(comma func_id)*]
+enumeration: ITEM COMMA ITEM [(COMMA ITEM)*]
+
+group: (L_PAREN expr R_PAREN)
+     | (L_BRACKET expr R_BRACKET)
+     | (L_BRACE expr R_BRACE)
+     | (L_BRACE_LITERAL expr R_BRACE_LITERAL)
+
+
 ITEM: LETTER 
      | INT 
      | SET_CONSTANT 
-comma: ","
+
+ADD: "+"
+SUB: "-"
+MUL: "*"
+DIV: "/"
+BANG: "!"
+BAR: "|"
+CARET: "^"
+UNDERSCORE: "_"
 
 
-
-
+EQUAL: "="
+TO: "\\to" | "\\rightarrow"
+COMMA: ","
+COLON: ":" | "\\colon"
 
 L_PAREN: "("
 R_PAREN: ")"
@@ -58,11 +123,11 @@ CMD_BINOM: "\\binom"
 CMD_DBINOM: "\\dbinom"
 CMD_TBINOM: "\\tbinom"
 
-
 UPPER_LETTER: "A".."Z"
+LOWER_LETTER: "a".."z"
 
 %ignore WS
 %ignore NEWLINE
-%import common (WS, NEWLINE, INT,  LETTER)
+%import common (WS, NEWLINE, INT, LETTER, SIGNED_NUMBER)
 %import .sets (SET_CONSTANT, SETARB_OPERATOR_BOOL, SETSET_OPERATOR_BOOL, SET_OPERATOR_SET, OP_TO_SET_POW)
 %import .functions.FUNC_NORMAL 
