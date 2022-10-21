@@ -4,13 +4,22 @@ from lark import Lark
 import os
 
 
-
 class FormulaType:
     type_parser = None
 
-    def __init__(self, latex_str):
+    def __init__(self, latex_str, sel_formula_token = None, formula_dict = None) -> None:
 
-        self._latex_str = latex_str
+        self._sel_formula_token = "" 
+        self._formula_dict = None
+
+        if not sel_formula_token == None and \
+           not formula_dict == None:
+            self._latex_str = formula_dict[sel_formula_token]
+            self._sel_formula_token = sel_formula_token 
+            self._formula_dict = formula_dict
+        else:
+            self._latex_str = latex_str 
+        
         self._grammar_file = "sem_math/grammar/type_grammar.lark"
         self._parsed_structure = None
         FormulaType.read_parser_grammar(self._grammar_file)
@@ -35,6 +44,9 @@ class FormulaType:
             some_val = e
             self._math_type = "UNK"
 
+    def print_type(self):
+        print("MATH-TYPE (formula): ", self._math_type)
+
     @classmethod
     def read_parser_grammar(cls, file_path):
         grammar_str = "" 
@@ -48,6 +60,9 @@ class FormulaType:
 
     def get_math_type(self):
         return self._math_type
+
+    def get_formula_str(self):
+        return self._latex_str
 
     
 class FormulaContextType:
@@ -114,26 +129,46 @@ class FormulaContextType:
 
         return has_prep_between
 
-    def print_context(self, with_tags = True):
+    def determine_formula_type(self, conditions: dict) -> None: 
+        pos1_tag, pos1_position = conditions["has_pos"]
+        pos2_tag, other_tag = conditions["has_pos_between"] 
+        type_keyword_pos = conditions["type_keyword_pos"]
+
+        if self.has_pos_in_window(pos1_tag, pos1_position):
+            if not self.has_pos_between_formula_and_other(pos2_tag, other_tag):
+                self._math_type = self.evaluate_math_type(type_keyword_pos, True)
+        else:
+            self._math_type = "UNK"
+
+
+    def print_context(self):
 
         print("----------------------------------------------------------------------------------------------------")
         print("formula: " + str(self._formula_dict[self._sel_formula_token]))
-        print("noun: ", str(self._selected_pos_elems["NOUN"][0].text))
-        print("MATH-TYPE: ", str(self.get_math_type()))
+        if not self._selected_pos_elems == {} and "NOUN" in self._selected_pos_elems.keys():
+            print("noun: ", str(self._selected_pos_elems["NOUN"][0].text))
+        else:
+            print("NOUN: not found")
         for tok in self._context_doc:
             print("\t" + "sel_token: " + str(tok.text) + ": " + str(tok.pos_) + ": " + str(tok.dep_))
+        print("MATH-TYPE (context): ", str(self.get_math_type()))
 
-    def get_math_type(self, evaluate=True):
+    def evaluate_math_type(self, keyword_pos, evaluate=True):
         if evaluate == True:
             for keyword in self._type_keywords.keys():
-                if keyword in str(self._selected_pos_elems["NOUN"][0].text):
+                if keyword in str(self._selected_pos_elems[keyword_pos][0].text):
                     self._math_type = self._type_keywords[keyword]
                     return self._math_type
             return self._math_type
         elif evaluate == False:
             return self._math_type
-        
     
+    def get_math_type(self):
+        return self._math_type
+        
+    def get_formula_str(self):
+        return self._formula_dict[self._sel_formula_token]
+
     def _generate_doc(self):
         context_str = "" 
         for token in self._context_tokens:

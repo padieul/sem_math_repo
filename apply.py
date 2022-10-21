@@ -1,5 +1,5 @@
 from mse_db import MSE_DBS
-from sem_math import PostThread, FormulaContextType
+from sem_math import PostThread, FormulaContextType, FormulaType, Comparer
 import spacy
 import re
 
@@ -230,7 +230,7 @@ def print_out_titles_context(db, cl, coll_name, single_post_thread):
 
 # prints out extracted text bodys with parses, formulas and tokenization
 # usage: data.apply_to_each("elementary-set-theory", print_out_titles)
-def print_out_posts_context(db, cl, coll_name, single_post_thread):
+def print_out_posts_types(db, cl, coll_name, single_post_thread):
     total_formula_count = single_post_thread["formulas_count"]
     met_criteria_formula_count = 0
 
@@ -259,13 +259,32 @@ def print_out_posts_context(db, cl, coll_name, single_post_thread):
                             token_list.append(post[i]) 
                     except Exception as e:
                         print("some")
-                    
+
+                    # type is determined by the textual context surrounding a formula string
+                    formula_c_type = FormulaContextType("kb/type_context_keywords.json", token_list, formula_token, formulas_dict, 3)
+                    #formula_c_type.determine_formula_type(conditions = {"has_pos": ("NOUN", "left"), "has_pos_between": ("not PREP", "NOUN"), "type_keyword_pos": "NOUN"})
+                    formula_c_type.determine_formula_type(conditions = {"has_pos": ("NOUN", "left"), "has_pos_between": ("PREP", "NOUN"), "type_keyword_pos": "NOUN"})
+
+                    # type is determined by formula parser
+                    formula_type = FormulaType(formulas_dict[formula_token], formula_token, formulas_dict)
+                    formula_type.determine_formula_type()
+
+                    # comparer object acts as arbitrator between formula_type and formula_c_type 
+                    comp = Comparer(formula_c_type, formula_type)
+                    final_type, decision_str = comp.decide_type("formula")
+                    comp.print_out(decision_str)
+                    if not final_type == "UNK":
+                        met_criteria_formula_count += 1
+
+                    """
                     formula_c_type = FormulaContextType("kb/type_context_keywords.json", token_list, formula_token, formulas_dict, 3)
                     if formula_c_type.has_pos_in_window("NOUN", interval="left"):
                         if not formula_c_type.has_pos_between_formula_and_other("PREP", other_tag="NOUN"):
-                            formula_c_type.print_context()
+                            formula_type = FormulaType()
+                            comp = Comparer()
+                            formula_c_type.print_context(formula_c_type)
                             met_criteria_formula_count += 1
-                    
+                    """
                     
                 count += 1
 
@@ -304,8 +323,8 @@ if __name__ == "__main__":
 
     data = MSE_DBS(db_settings_file_name, log_file_name) 
 
-    data.apply_to_each("elementary-set-theory", print_out_posts_context, limit = 2000)
+    data.apply_to_each("elementary-set-theory", print_out_posts_types, limit = 100)
     print("TOTAL ---- MET CONDITIONS FORMULA_COUNT: ", str(data.get_count()))
     data.reset_count()
-    data.apply_to_each("elementary-set-theory", count_all_formulas, limit = 2000)
+    data.apply_to_each("elementary-set-theory", count_all_formulas, limit = 100)
     print("TOTAL ---- ALL FORMULAS: ", str(data.get_count()))
