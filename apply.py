@@ -253,7 +253,7 @@ def print_out_posts_types(db, cl, coll_name, single_post_thread):
                     token_list = []
                     formula_token = token
                     try:
-                        for i in range(count-5, count+5, 1):
+                        for i in range(count-15, count+15, 1):
                             if i < 0 or i > (len(post) - 1):
                                 continue
                             token_list.append(post[i]) 
@@ -262,8 +262,12 @@ def print_out_posts_types(db, cl, coll_name, single_post_thread):
 
                     # type is determined by the textual context surrounding a formula string
                     formula_c_type = FormulaContextType("kb/type_context_keywords.json", token_list, formula_token, formulas_dict, 3)
-                    #formula_c_type.determine_formula_type(conditions = {"has_pos": ("NOUN", "left"), "has_pos_between": ("not PREP", "NOUN"), "type_keyword_pos": "NOUN"})
-                    formula_c_type.determine_formula_type(conditions = {"has_pos": ("NOUN", "left"), "has_pos_between": ("PREP", "NOUN"), "type_keyword_pos": "NOUN"})
+                    #formula_c_type.determine_formula_type(conditions = {"has_pos": ("NOUN", "left"), "has_pos_between": ("PREP", "NOUN"), "type_keyword_pos": "NOUN"})
+                    matching_rules = [ {"descriptor_pos": ("NOUN", "left"), "formula_dep": "not pobj"},  ### RULE 1
+                                       {"descriptor_dep": "attr", "formula_dep": "nsubj"} ]              ### RULE 2
+                    formula_c_type.find_type_descriptors(matching_rules)
+                    formula_c_type.determine_formula_type(priority = 1)  # 0 - rule1, 1 - rule2
+
 
                     # type is determined by formula parser
                     formula_type = FormulaType(formulas_dict[formula_token], formula_token, formulas_dict)
@@ -323,8 +327,8 @@ if __name__ == "__main__":
 
     data = MSE_DBS(db_settings_file_name, log_file_name) 
 
-    data.apply_to_each("elementary-set-theory", print_out_posts_types, limit = 100)
+    data.apply_to_each("elementary-set-theory", print_out_posts_types, limit = 10)
     print("TOTAL ---- MET CONDITIONS FORMULA_COUNT: ", str(data.get_count()))
     data.reset_count()
-    data.apply_to_each("elementary-set-theory", count_all_formulas, limit = 100)
+    data.apply_to_each("elementary-set-theory", count_all_formulas, limit = 10)
     print("TOTAL ---- ALL FORMULAS: ", str(data.get_count()))
