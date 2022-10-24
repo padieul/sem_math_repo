@@ -5,7 +5,7 @@
 /dlmf-chapters-OneTextBlockPerMathExpr
 /dlmf-chapters-SimpleXML
 /conf 
-
+/print_outs
 
 db_conf.json
 conf/storing_log.txt
@@ -43,3 +43,5 @@ print_outs/descriptive_nouns_body_5000_new.txt
 some.lark
 print_outs/types_100.txt
 print_outs/types_100_both.txt
+print_outs/types_10_new.txt
+print_outs/types_100_formula_old.txt
