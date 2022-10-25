@@ -86,7 +86,7 @@ class FormulaContextType:
         self._context_doc = self._generate_doc()
 
     def determine_formula_type(self, priority: int) -> None: 
-        assert priority > -1 and priority < len(self._textual_type_descriptors)
+        assert priority > -1 and priority < 2
         
         determined_types = []
         for candidate in self._textual_type_descriptors:
@@ -132,25 +132,20 @@ class FormulaContextType:
 
     def _extract_type_descriptor_rule_one(self, f_dep_bool: bool, f_dep: str, 
                                                 d_pos_tag: str, d_pos_position: str) -> None:
-        descriptor_dict = {}
-
+        
         count = self._context_tokens.index(self._sel_formula_token)
         if (self._context_doc[count].dep_ == f_dep and f_dep_bool == True) or \
            (not self._context_doc[count].dep_ == f_dep and f_dep_bool == False):
             
             descriptor_dict = self._get_pos_in_window(d_pos_tag, d_pos_position)
-            if descriptor_dict == {}:
-                descriptor_dict["text"] = "" 
-                descriptor_dict["dep"] = ""
-                descriptor_dict["pos"] = ""
+            if not descriptor_dict == {}:
+                descriptor_dict["rule"] = "one"
+                self._textual_type_descriptors.append(descriptor_dict)
 
         else:
-            descriptor_dict["text"] = "" 
-            descriptor_dict["dep"] = ""
-            descriptor_dict["pos"] = ""
+            ...
         
-        descriptor_dict["rule"] = "one"
-        self._textual_type_descriptors.append(descriptor_dict)
+        
 
 
     def _extract_type_descriptor_rule_two(self, d_dep: str, f_dep: str) -> None:
@@ -162,16 +157,16 @@ class FormulaContextType:
         if self._context_doc[count].dep_ == f_dep:
             for possible_attr in self._context_doc:
                 if possible_attr.dep_ == d_dep and self._context_doc[count] in possible_attr.head.children:
-                    descriptor_dict["text"] = possible_attr.text
-                    descriptor_dict["dep"] = possible_attr.dep_ 
-                    descriptor_dict["pos"] = possible_attr.pos_
+                    if not possible_attr.text in self._formula_tokens:
+                        descriptor_dict["text"] = possible_attr.text
+                        descriptor_dict["dep"] = possible_attr.dep_ 
+                        descriptor_dict["pos"] = possible_attr.pos_
+                        descriptor_dict["rule"] = "two"
+                        self._textual_type_descriptors.append(descriptor_dict)
         else:
-            descriptor_dict["text"] = "" 
-            descriptor_dict["dep"] = ""
-            descriptor_dict["pos"] = ""
-            
-        descriptor_dict["rule"] = "two"
-        self._textual_type_descriptors.append(descriptor_dict)
+            ...
+
+        
 
     def _get_pos_in_window(self, pos_tag: str, interval: str) -> dict:
 

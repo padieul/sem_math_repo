@@ -45,3 +45,4 @@ print_outs/types_100.txt
 print_outs/types_100_both.txt
 print_outs/types_10_new.txt
 print_outs/types_100_formula_old.txt
+testing_threading.py

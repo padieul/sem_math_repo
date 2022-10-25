@@ -1,6 +1,6 @@
 import json 
 import spacy
-from pymongo import MongoClient 
+from pymongo import MongoClient, ConnectionFailure
 from tqdm import tqdm
 import re
 

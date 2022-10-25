@@ -1,5 +1,5 @@
 from .math_types import FormulaType, FormulaContextType
-
+from typing import Tuple
 
 class Comparer:
 
@@ -23,13 +23,19 @@ class Comparer:
     formula - only if formula or both components determine a type
     context - only if context or both components determine a type
     """
-    def decide_type(self, priority: str = None) -> (str,str):
+    def decide_type(self, priority: str = None) -> Tuple[str,str]:
 
         assert self._same_formula_str, "FormulaType and FormulaContextType objects do not" + \
                                        "describe the same formula"
 
         f_c_type_str = self._f_c_type.get_math_type() 
         f_type_str = self._f_type.get_math_type()
+
+        determined_by_context_rule_two = False
+        t_d = self._f_c_type.get_type_descriptors()
+        for t in t_d:
+            if t["rule"] == "two":
+                determined_by_context_rule_two = True
 
         match priority:
 
@@ -41,6 +47,8 @@ class Comparer:
             case "formula":
                 if f_c_type_str == f_type_str:
                     return (f_c_type_str, "both")
+                elif determined_by_context_rule_two and not f_c_type_str == "UNK":
+                    return (f_c_type_str, "context (r2)")
                 elif not f_type_str == "UNK":
                     return (f_type_str, "formula")
                 else:
@@ -53,10 +61,11 @@ class Comparer:
                 else:
                     return ("UNK", "undecided")
 
-    def print_out(self, decision_str):
+    def print_out(self, final_type, decision_str):
         self._f_c_type.print_context()
         self._f_type.print_type()
         print("COMPARER decision: ", decision_str)
+        print("TYPE: ", final_type) 
 
     
     
