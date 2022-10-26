@@ -239,17 +239,16 @@ def print_out_posts_types(db, cl, coll_name, single_post_thread):
         tokenized_posts = single_post_thread["tokenized_posts"]
         formulas_dict = single_post_thread["formulas"]
         formulas_dict_tokens = single_post_thread["formulas"].keys()
-        print("POST_THREAD #", single_post_thread["_id"])
-        print("*********************************************************************")
+        #print("POST_THREAD #", single_post_thread["_id"])
+        #print("*********************************************************************")
 
         for post in tokenized_posts:
 
             count = 0
             for token in post:
                 if token in formulas_dict_tokens:
-                    if token == "f_1_2_0" and formulas_dict[token] == "A":
-                        print("some")
-                
+                    #print("POST_THREAD #", single_post_thread["_id"])
+
                     token_list = []
                     formula_token = token
                     try:
@@ -276,7 +275,7 @@ def print_out_posts_types(db, cl, coll_name, single_post_thread):
                     # comparer object acts as arbitrator between formula_type and formula_c_type 
                     comp = Comparer(formula_c_type, formula_type)
                     final_type, decision_str = comp.decide_type("formula")
-                    #comp.print_out(final_type, decision_str)
+                    comp.print_out(final_type, decision_str)
                     if not final_type == "UNK":
                         met_criteria_formula_count += 1
                     
@@ -316,9 +315,12 @@ if __name__ == "__main__":
     db_settings_file_name = "conf\db_conf.json"             # settings file
 
     data = MSE_DBS(db_settings_file_name, log_file_name) 
-
+    """
     data.apply_to_each("elementary-set-theory", print_out_posts_types, limit = 100)
     print("TOTAL ---- MET CONDITIONS FORMULA_COUNT: ", str(data.get_count()))
     data.reset_count()
     data.apply_to_each("elementary-set-theory", count_all_formulas, limit = 100)
     print("TOTAL ---- ALL FORMULAS: ", str(data.get_count()))
+    """
+    #data.apply_to_each_multi("elementary-set-theory", 10, print_out_posts_types, limit = 3)
+    data.apply_to_each_multi("elementary-set-theory", 8, print_out_posts_types, limit = 500)

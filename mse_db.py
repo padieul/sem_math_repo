@@ -1,6 +1,9 @@
 import json 
 import spacy
-from pymongo import MongoClient, ConnectionFailure
+from pymongo import MongoClient, errors
+#from multiprocessing import Process, Value, Array, Pool
+import multiprocess as mp
+from itertools import product
 from tqdm import tqdm
 import re
 
@@ -129,9 +132,9 @@ class MSE_DBS:
         self._log_file_path = log_file_path
         self._sett_file_path = sett_file_path 
 
-        sett = self._get_db_settings(self._sett_file_path)
-        self._db, self._client = self._get_mongo_db(sett)
-
+        self._sett = self._get_db_settings(self._sett_file_path)
+        #self._db, self._client = self._get_mongo_db()
+        self._dbs, self._clients = [], []
         self._total_count = 0
 
     def _get_db_settings(self, s_filename):
@@ -141,21 +144,20 @@ class MSE_DBS:
         f.close()
         return db_settings
 
-    def _get_mongo_db(self, settings):
+    def _get_mongo_db(self):
 
-        MONGODB_USER_NAME = settings["username"] 
-        MONGODB_PASSWORD = settings["password"] 
-        MONGODB_HOST = settings["host"] 
-        MONGODB_PORT = settings["port"] 
-        MONGODB_SOURCE = settings["db"]
-        MONGODB_AUTHENTICATION_DB = settings["db"]
+        MONGODB_USER_NAME = self._sett["username"] 
+        MONGODB_PASSWORD = self._sett["password"] 
+        MONGODB_HOST = self._sett["host"] 
+        MONGODB_PORT = self._sett["port"] 
+        MONGODB_AUTHENTICATION_DB = self._sett["db"]
 
         uri_str = "mongodb://" + MONGODB_USER_NAME + ":" + MONGODB_PASSWORD + "@" + MONGODB_HOST + ":" + str(MONGODB_PORT)
         client = MongoClient(uri_str)
         
         try:
             client.admin.command("ping")
-        except ConnectionFailure: 
+        except errors.ConnectionFailure:
             print("Server not available")
 
         db = client[MONGODB_AUTHENTICATION_DB]
@@ -210,6 +212,158 @@ class MSE_DBS:
         self._total_count += counter
         
         session.end_session()
+
+
+
+    def apply_to_each_multi(self, all_thread_coll_name, multi_num, func, limit):
+
+        #self._dbs, self._clients = self._get_mongo_dbs(multi_num)
+
+        def apply_in_process(sett_dict, counter_ar, p_count, all_threads_coll_name, func, doc_interval):
+            #print("ALIVE: " + str(p_count))
+            MONGODB_USER_NAME = sett_dict["username"] 
+            MONGODB_PASSWORD = sett_dict["password"] 
+            MONGODB_HOST = sett_dict["host"] 
+            MONGODB_PORT = int(sett_dict["port"]) # + int(p_count)
+            MONGODB_AUTHENTICATION_DB = sett_dict["db"]
+
+            uri_str = "mongodb://" + MONGODB_USER_NAME + ":" + MONGODB_PASSWORD + "@" + MONGODB_HOST + ":" + str(MONGODB_PORT)
+            client = MongoClient(uri_str, minPoolSize = 4)
+        
+            try:
+                client.admin.command("ping")
+            except errors.ConnectionFailure:
+                print("Server not available")
+
+            db = client[MONGODB_AUTHENTICATION_DB]
+            #print("ALIVE II: " + str(p_count) + " -- doc: " + str(doc_interval))
+            limit_left = doc_interval[0]
+            limit_right = doc_interval[1]
+
+            with client.start_session() as session:
+                threads_cursor = db[all_threads_coll_name].find({}, no_cursor_timeout=True, batch_size=1, session=session)
+                total_count = db[all_threads_coll_name].count_documents({})
+
+                #print("ALIVE III: " + str(p_count) + "total count: " + str(total_count))
+                
+                limit_count = 0
+                counter = 0
+                
+                if p_count == 0:
+                    for post_thread in tqdm(threads_cursor, total = limit_right, dynamic_ncols=True, ):
+                        #print("ALIVE IV: " + str(p_count) + " l,r: " + str(limit_left) + " | " + str(limit_right))
+                        if limit_count < limit_left:
+                            limit_count += 1
+                            continue
+                        if limit_count == limit_right:
+                            break
+                        #print("process: " + str(p_count) + ", doc: " + str(limit_count))
+                        try:
+                            counter += func(db, client, all_threads_coll_name, post_thread)
+                        except Exception as e:
+                            #print(e)
+                            limit_count += 1
+                            continue
+                        limit_count += 1
+                else:
+                    for post_thread in threads_cursor:
+                        #print("ALIVE IV: " + str(p_count) + " l,r: " + str(limit_left) + " | " + str(limit_right))
+                        print("P: " + str(p_count) + ", limit_count: " + str(limit_count))
+                        if limit_count < limit_left:
+                            #print("P: " + str(p_count) + " smaller")
+                            limit_count += 1
+                            continue
+                        if limit_count == limit_right:
+                            #print("P: " + str(p_count) + " break")
+                            break
+                        #print("process: " + str(p_count) + ", doc: " + str(limit_count))
+                        try:
+                            counter += func(db, client, all_threads_coll_name, post_thread)
+                        except Exception as e:
+                            #print(e)
+                            limit_count += 1
+                            continue
+                        limit_count += 1
+
+            counter_ar[p_count] += counter
+            session.end_session()
+
+
+        counter_ar = mp.Array('i', multi_num)
+
+        p_intervals = self._calculate_access_intervals(multi_num, limit)
+        
+        processes = []
+        for p_count in range(multi_num):
+            #print(p_count)
+            p = mp.Process(target=apply_in_process, args=(self._sett, counter_ar, p_count, all_thread_coll_name, func, p_intervals[p_count],))
+            processes.append(p)
+        for p in processes:
+            #print("start")
+            p.start()
+        for p in processes:
+            #print("join")
+            p.join() 
+        
+        """
+        with mp.Pool(processes=4) as pool:
+            results = pool.starmap(apply_in_process, product(self._sett, counter_ar, p_count, all_thread_coll_name, func, p_intervals[p_count]))
+
+        pool.map()
+        """
+
+        self._total_count = sum(list(counter_ar))
+
+
+    """
+    def _get_mongo_dbs(self, num):
+
+        dbs = [] 
+        clients = [] 
+        
+        for i in range(num):
+
+            MONGODB_USER_NAME = self._sett["username"] 
+            MONGODB_PASSWORD = self._sett["password"] 
+            MONGODB_HOST = self._sett["host"] 
+            MONGODB_PORT = int(self._sett["port"]) + int(i)
+            MONGODB_AUTHENTICATION_DB = self._sett["db"]
+
+            uri_str = "mongodb://" + MONGODB_USER_NAME + ":" + MONGODB_PASSWORD + "@" + MONGODB_HOST + ":" + str(MONGODB_PORT)
+            client = MongoClient(uri_str)
+        
+            try:
+                client.admin.command("ping")
+            except errors.ConnectionFailure:
+                print("Server not available")
+
+            db = client[MONGODB_AUTHENTICATION_DB]
+            dbs.append(db)
+            clients.append(client)
+        
+        return dbs, clients
+    """ 
+
+    def _calculate_access_intervals(self, multi_num, limit):
+
+        p_collection_intervals = []
+        limit_mod = limit % multi_num
+        if limit_mod == 0:
+            limit_div = limit / multi_num
+            for i in range(1,multi_num+1):
+                if i == 1:
+                    p_collection_intervals.append((0, int(limit_div - 1)))
+                else:
+                    p_collection_intervals.append((int(i*limit_div - limit_div - 1), int(i*limit_div - 1)))
+        else:
+            limit_div = (limit - limit_mod) / multi_num
+            for i in range(1,multi_num+1):
+                if i == 1:
+                    p_collection_intervals.append((0, int(limit_div + limit_mod - 1)))
+                else:
+                    p_collection_intervals.append((int(i*limit_div - limit_div + limit_mod - 1), int(i*limit_div + limit_mod - 1)))
+
+        return p_collection_intervals
 
     def apply_once(self, all_threads_coll_name, func):
         
