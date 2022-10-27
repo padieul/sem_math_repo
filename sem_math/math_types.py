@@ -155,14 +155,16 @@ class FormulaContextType:
         count = self._context_tokens.index(self._sel_formula_token)
         interval_size = len(self._context_tokens) // 2
         if self._context_doc[count].dep_ == f_dep:
+            attr_count = 0
             for possible_attr in self._context_doc:
                 if possible_attr.dep_ == d_dep and self._context_doc[count] in possible_attr.head.children:
                     if not possible_attr.text in self._formula_tokens:
-                        descriptor_dict["text"] = possible_attr.text
+                        descriptor_dict["text"] = self._get_noun_chunk(possible_attr.text, attr_count)
                         descriptor_dict["dep"] = possible_attr.dep_ 
                         descriptor_dict["pos"] = possible_attr.pos_
                         descriptor_dict["rule"] = "two"
                         self._textual_type_descriptors.append(descriptor_dict)
+                attr_count += 1
         else:
             ...
 
@@ -188,13 +190,21 @@ class FormulaContextType:
             sel_token = self._context_doc[i] 
             if sel_token.pos_ == pos_tag and not sel_token.text in self._formula_tokens:
                 descriptor_dict = {}
-                descriptor_dict["text"] = sel_token.text
-                descriptor_dict["dep"] = sel_token.dep_
+                n_text, n_dep = self._get_noun_chunk(sel_token.text, sel_token.dep_, i)
+                descriptor_dict["text"] = n_text
+                descriptor_dict["dep"] = n_dep
                 descriptor_dict["pos"] = sel_token.pos_
                 break
             
         return descriptor_dict
     
+
+    def _get_noun_chunk(self, noun_text, noun_dep, noun_idx):
+        for chunk in self._context_doc.noun_chunks:
+            if noun_text in chunk.text:
+                return chunk.text, chunk.root.dep_ 
+        return noun_text, noun_dep
+
     def print_context(self):
 
         print("----------------------------------------------------------------------------------------------------")

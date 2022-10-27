@@ -274,8 +274,8 @@ def print_out_posts_types(db, cl, coll_name, single_post_thread):
 
                     # comparer object acts as arbitrator between formula_type and formula_c_type 
                     comp = Comparer(formula_c_type, formula_type)
-                    final_type, decision_str = comp.decide_type("formula")
-                    comp.print_out(final_type, decision_str)
+                    final_type, textual_descr, decision_str = comp.decide_type("formula")
+                    comp.print_out(final_type, textual_descr, decision_str)
                     if not final_type == "UNK":
                         met_criteria_formula_count += 1
                     
@@ -323,4 +323,4 @@ if __name__ == "__main__":
     print("TOTAL ---- ALL FORMULAS: ", str(data.get_count()))
     """
     #data.apply_to_each_multi("elementary-set-theory", 10, print_out_posts_types, limit = 3)
-    data.apply_to_each_multi("elementary-set-theory", 8, print_out_posts_types, limit = 500)
+    data.apply_to_each_multi("elementary-set-theory", 8, print_out_posts_types, limit = 100)

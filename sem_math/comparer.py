@@ -33,37 +33,44 @@ class Comparer:
 
         determined_by_context_rule_two = False
         t_d = self._f_c_type.get_type_descriptors()
+
+        descriptor_str = ""
         for t in t_d:
             if t["rule"] == "two":
+                descriptor_str = t["text"]
                 determined_by_context_rule_two = True
+            elif t["rule"] == "one":
+                if not descriptor_str == "":
+                    descriptor_str = t["text"]
 
         match priority:
 
             case "both":
-                if f_c_type_str == f_type_str:
-                    return (f_c_type_str, "both")
+                if f_c_type_str == f_type_str and not f_c_type_str == "UNK":
+                    return (f_c_type_str, descriptor_str, "both")
                 else:
-                    return ("UNK", "undecided")
+                    return ("UNK", "", "undecided")
             case "formula":
                 if f_c_type_str == f_type_str:
-                    return (f_c_type_str, "both")
+                    return (f_c_type_str, descriptor_str, "both")
                 elif determined_by_context_rule_two and not f_c_type_str == "UNK":
-                    return (f_c_type_str, "context (r2)")
+                    return (f_c_type_str, descriptor_str, "context (r2)")
                 elif not f_type_str == "UNK":
-                    return (f_type_str, "formula")
+                    return (f_type_str, "", "formula")
                 else:
-                    return ("UNK", "undecided")
+                    return ("UNK", "", "undecided")
             case "context":
                 if f_c_type_str == f_type_str:
-                    return (f_c_type_str, "both")
+                    return (f_c_type_str, descriptor_str,"both")
                 elif not f_c_type_str == "UNK":
-                    return (f_c_type_str, "context")
+                    return (f_c_type_str, descriptor_str,"context")
                 else:
-                    return ("UNK", "undecided")
+                    return ("UNK", "", "undecided")
 
-    def print_out(self, final_type, decision_str):
+    def print_out(self, final_type, textual_descr, decision_str):
         self._f_c_type.print_context()
         self._f_type.print_type()
+        print("description: ", textual_descr)
         print("COMPARER decision: ", decision_str)
         print("TYPE: ", final_type) 
 
