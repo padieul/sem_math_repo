@@ -159,8 +159,9 @@ class FormulaContextType:
             for possible_attr in self._context_doc:
                 if possible_attr.dep_ == d_dep and self._context_doc[count] in possible_attr.head.children:
                     if not possible_attr.text in self._formula_tokens:
-                        descriptor_dict["text"] = self._get_noun_chunk(possible_attr.text, attr_count)
-                        descriptor_dict["dep"] = possible_attr.dep_ 
+                        n_text, n_dep = self._get_noun_chunk(possible_attr.text, possible_attr.dep_, attr_count)
+                        descriptor_dict["text"] = n_text
+                        descriptor_dict["dep"] = n_dep
                         descriptor_dict["pos"] = possible_attr.pos_
                         descriptor_dict["rule"] = "two"
                         self._textual_type_descriptors.append(descriptor_dict)

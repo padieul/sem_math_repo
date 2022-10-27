@@ -233,21 +233,24 @@ def print_out_titles_context(db, cl, coll_name, single_post_thread):
 def print_out_posts_types(db, cl, coll_name, single_post_thread):
     total_formula_count = single_post_thread["formulas_count"]
     met_criteria_formula_count = 0
-
     if total_formula_count > 0:
 
         tokenized_posts = single_post_thread["tokenized_posts"]
         formulas_dict = single_post_thread["formulas"]
         formulas_dict_tokens = single_post_thread["formulas"].keys()
         #print("POST_THREAD #", single_post_thread["_id"])
-        #print("*********************************************************************")
-
+        print("total_formula_count: ", total_formula_count)
         for post in tokenized_posts:
 
             count = 0
             for token in post:
                 if token in formulas_dict_tokens:
                     #print("POST_THREAD #", single_post_thread["_id"])
+                    print("*********************************************************************")
+                    #print("")
+                    if token == "0,q_1,-q_1,q_2,-q_2,q_3,-q_3,\ldots":
+                        print(token)
+                        print("doing")
 
                     token_list = []
                     formula_token = token
@@ -275,15 +278,22 @@ def print_out_posts_types(db, cl, coll_name, single_post_thread):
                     # comparer object acts as arbitrator between formula_type and formula_c_type 
                     comp = Comparer(formula_c_type, formula_type)
                     final_type, textual_descr, decision_str = comp.decide_type("formula")
+                    #print("---")
                     comp.print_out(final_type, textual_descr, decision_str)
+                    #print(final_type)
                     if not final_type == "UNK":
                         met_criteria_formula_count += 1
                     
                 count += 1
 
+        try:
+            ...
+        except:
+            ...
+
+
         print("met_criteria_formula_count: ", str(met_criteria_formula_count))
         print("TOTAL FORMULA COUNT: ", str(total_formula_count))
-    
     return met_criteria_formula_count
 
 
@@ -323,4 +333,9 @@ if __name__ == "__main__":
     print("TOTAL ---- ALL FORMULAS: ", str(data.get_count()))
     """
     #data.apply_to_each_multi("elementary-set-theory", 10, print_out_posts_types, limit = 3)
+
     data.apply_to_each_multi("elementary-set-theory", 8, print_out_posts_types, limit = 100)
+    print("TOTAL ---- MET CONDITIONS FORMULA_COUNT: ", str(data.get_count()))
+    #data.reset_count()
+    #data.apply_to_each("elementary-set-theory", count_all_formulas, limit = 100)
+    #print("TOTAL ---- ALL FORMULAS: ", str(data.get_count()))

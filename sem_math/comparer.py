@@ -40,7 +40,7 @@ class Comparer:
                 descriptor_str = t["text"]
                 determined_by_context_rule_two = True
             elif t["rule"] == "one":
-                if not descriptor_str == "":
+                if descriptor_str == "":
                     descriptor_str = t["text"]
 
         match priority:
@@ -56,7 +56,7 @@ class Comparer:
                 elif determined_by_context_rule_two and not f_c_type_str == "UNK":
                     return (f_c_type_str, descriptor_str, "context (r2)")
                 elif not f_type_str == "UNK":
-                    return (f_type_str, "", "formula")
+                    return (f_type_str, descriptor_str, "formula")
                 else:
                     return ("UNK", "", "undecided")
             case "context":

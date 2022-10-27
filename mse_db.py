@@ -167,6 +167,7 @@ class MSE_DBS:
     def apply_to_each_conserve(self, all_threads_coll_name, func, limit):
         counter = 0
         counter_all = 0
+        self._db, self._client = self._get_mongo_db()
 
 
         with self._client.start_session() as session:
@@ -192,6 +193,7 @@ class MSE_DBS:
 
     def apply_to_each(self, all_threads_coll_name, func, limit):
         counter = 0
+        self._db, self._client = self._get_mongo_db()
 
         with self._client.start_session() as session:
             threads_cursor = self._db[all_threads_coll_name].find({}, no_cursor_timeout=True, batch_size=1, session=session)
@@ -216,8 +218,6 @@ class MSE_DBS:
 
 
     def apply_to_each_multi(self, all_thread_coll_name, multi_num, func, limit):
-
-        #self._dbs, self._clients = self._get_mongo_dbs(multi_num)
 
         def apply_in_process(sett_dict, counter_ar, p_count, all_threads_coll_name, func, doc_interval):
             #print("ALIVE: " + str(p_count))
@@ -261,14 +261,14 @@ class MSE_DBS:
                         try:
                             counter += func(db, client, all_threads_coll_name, post_thread)
                         except Exception as e:
-                            #print(e)
+                            print(e)
                             limit_count += 1
                             continue
                         limit_count += 1
                 else:
                     for post_thread in threads_cursor:
                         #print("ALIVE IV: " + str(p_count) + " l,r: " + str(limit_left) + " | " + str(limit_right))
-                        print("P: " + str(p_count) + ", limit_count: " + str(limit_count))
+                        #print("P: " + str(p_count) + ", limit_count: " + str(limit_count))
                         if limit_count < limit_left:
                             #print("P: " + str(p_count) + " smaller")
                             limit_count += 1
@@ -280,7 +280,7 @@ class MSE_DBS:
                         try:
                             counter += func(db, client, all_threads_coll_name, post_thread)
                         except Exception as e:
-                            #print(e)
+                            print(e)
                             limit_count += 1
                             continue
                         limit_count += 1
@@ -305,15 +305,9 @@ class MSE_DBS:
             #print("join")
             p.join() 
         
-        """
-        with mp.Pool(processes=4) as pool:
-            results = pool.starmap(apply_in_process, product(self._sett, counter_ar, p_count, all_thread_coll_name, func, p_intervals[p_count]))
-
-        pool.map()
-        """
-
-        self._total_count = sum(list(counter_ar))
-
+        counter_list = list(counter_ar)
+        print(counter_list)
+        self._total_count = sum(counter_list)
 
     """
     def _get_mongo_dbs(self, num):
@@ -366,6 +360,7 @@ class MSE_DBS:
         return p_collection_intervals
 
     def apply_once(self, all_threads_coll_name, func):
+        self._db, self._client = self._get_mongo_db()
         
         with self._client.start_session() as session:
             try:
