@@ -117,6 +117,7 @@ def extract_aligns_func(db, cl, coll_name, single_post_thread):
 
     if str(single_post_thread["_id"]) == "6327106206a69a3f488d74f8":
         print("it")
+
     
     align_str = "begin{align}"
     posts_list = [p["@Body"] for p in single_post_thread["posts"]] 
@@ -235,23 +236,18 @@ def print_out_posts_types(db, cl, coll_name, single_post_thread):
     met_criteria_formula_count = 0
     if total_formula_count > 0:
 
+        _id = single_post_thread["_id"]
         tokenized_posts = single_post_thread["tokenized_posts"]
         formulas_dict = single_post_thread["formulas"]
         formulas_dict_tokens = single_post_thread["formulas"].keys()
-        #print("POST_THREAD #", single_post_thread["_id"])
-        print("total_formula_count: ", total_formula_count)
+        formulas_with_types = []
+
         for post in tokenized_posts:
 
             count = 0
             for token in post:
                 if token in formulas_dict_tokens:
-                    #print("POST_THREAD #", single_post_thread["_id"])
-                    print("*********************************************************************")
-                    #print("")
-                    if token == "0,q_1,-q_1,q_2,-q_2,q_3,-q_3,\ldots":
-                        print(token)
-                        print("doing")
-
+                    
                     token_list = []
                     formula_token = token
                     try:
@@ -264,9 +260,10 @@ def print_out_posts_types(db, cl, coll_name, single_post_thread):
 
                     # type is determined by the textual context surrounding a formula string
                     formula_c_type = FormulaContextType("kb/type_context_keywords.json", token_list, formula_token, formulas_dict, 3)
-                    #formula_c_type.determine_formula_type(conditions = {"has_pos": ("NOUN", "left"), "has_pos_between": ("PREP", "NOUN"), "type_keyword_pos": "NOUN"})
+                
                     matching_rules = [ {"descriptor_pos": ("NOUN", "left"), "formula_dep": "not pobj"},  ### RULE 1
                                        {"descriptor_dep": "attr", "formula_dep": "nsubj"} ]              ### RULE 2
+
                     formula_c_type.find_type_descriptors(matching_rules)
                     formula_c_type.determine_formula_type(priority = 1)  # 0 - rule1, 1 - rule2
 
@@ -278,16 +275,24 @@ def print_out_posts_types(db, cl, coll_name, single_post_thread):
                     # comparer object acts as arbitrator between formula_type and formula_c_type 
                     comp = Comparer(formula_c_type, formula_type)
                     final_type, textual_descr, decision_str = comp.decide_type("formula")
-                    #print("---")
-                    comp.print_out(final_type, textual_descr, decision_str)
-                    #print(final_type)
+                    #comp.print_out(final_type, textual_descr, decision_str)
+                   
                     if not final_type == "UNK":
                         met_criteria_formula_count += 1
+
+                    formula_dict = {}
+                    formula_dict["id"] = token 
+                    formula_dict["latex"] = formulas_dict[token] 
+                    formula_dict["type"] = final_type 
+                    formula_dict["descriptor"] = textual_descr 
+                    formula_dict["decision"] = decision_str
+
+                    formulas_with_types.append(formula_dict)
                     
                 count += 1
 
         try:
-            ...
+            db[coll_name].update_one({"_id": _id}, {"$set": {"formulas": formulas_with_types}})
         except:
             ...
 
@@ -334,8 +339,8 @@ if __name__ == "__main__":
     """
     #data.apply_to_each_multi("elementary-set-theory", 10, print_out_posts_types, limit = 3)
 
-    data.apply_to_each_multi("elementary-set-theory", 8, print_out_posts_types, limit = 100)
+    data.apply_to_each_multi("euclidean-geometry", 8, print_out_posts_types, limit = 8188)
     print("TOTAL ---- MET CONDITIONS FORMULA_COUNT: ", str(data.get_count()))
-    #data.reset_count()
-    #data.apply_to_each("elementary-set-theory", count_all_formulas, limit = 100)
-    #print("TOTAL ---- ALL FORMULAS: ", str(data.get_count()))
+    data.reset_count()
+    data.apply_to_each("euclidean-geometry", count_all_formulas, limit = -1)
+    print("TOTAL ---- ALL FORMULAS: ", str(data.get_count()))

@@ -49,7 +49,7 @@ class Comparer:
                 if f_c_type_str == f_type_str and not f_c_type_str == "UNK":
                     return (f_c_type_str, descriptor_str, "both")
                 else:
-                    return ("UNK", "", "undecided")
+                    return ("UNK", descriptor_str, "undecided")
             case "formula":
                 if f_c_type_str == f_type_str:
                     return (f_c_type_str, descriptor_str, "both")
@@ -58,14 +58,14 @@ class Comparer:
                 elif not f_type_str == "UNK":
                     return (f_type_str, descriptor_str, "formula")
                 else:
-                    return ("UNK", "", "undecided")
+                    return ("UNK", descriptor_str , "undecided")
             case "context":
                 if f_c_type_str == f_type_str:
                     return (f_c_type_str, descriptor_str,"both")
                 elif not f_c_type_str == "UNK":
                     return (f_c_type_str, descriptor_str,"context")
                 else:
-                    return ("UNK", "", "undecided")
+                    return ("UNK", descriptor_str, "undecided")
 
     def print_out(self, final_type, textual_descr, decision_str):
         self._f_c_type.print_context()
