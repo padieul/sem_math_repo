@@ -1,9 +1,6 @@
 from mse_db import MSE_DBS
 from sem_math import PostThread, FormulaContextType, FormulaType, Comparer
 import spacy
-import re
-
-import latex2mathml.converter
 
 
 ### CATEGORIZATION FUNCTIONS
@@ -339,8 +336,11 @@ if __name__ == "__main__":
     """
     #data.apply_to_each_multi("elementary-set-theory", 10, print_out_posts_types, limit = 3)
 
-    data.apply_to_each_multi("euclidean-geometry", 8, print_out_posts_types, limit = 8188)
+
+    collection_name = "analytic-geometry"
+    size = 5934
+    data.apply_to_each_multi(collection_name, 8, print_out_posts_types, limit = (size + 1))
     print("TOTAL ---- MET CONDITIONS FORMULA_COUNT: ", str(data.get_count()))
     data.reset_count()
-    data.apply_to_each("euclidean-geometry", count_all_formulas, limit = -1)
+    data.apply_to_each(collection_name, count_all_formulas, limit = -1)
     print("TOTAL ---- ALL FORMULAS: ", str(data.get_count()))
