@@ -12,5 +12,5 @@ if __name__ == "__main__":
 
     data = MSE_DBS(db_settings_file_name, log_file_name) 
     total_len, av = data.apply_once("elementary-functions", funcs.count_av_all_posts_once)      # counts all documents in threads collection -> ENTIRE DATASET
-    print("There is a total of {} posts with an average of {} posts per post-thread".format(total_len, av))
+    print("There is a total of {} posts with an average of {:.2f} posts per post-thread".format(total_len, av))
     

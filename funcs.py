@@ -206,8 +206,8 @@ def print_out_titles_context(db, cl, coll_name, single_post_thread):
                             print(title)
                             print("formula: " + str(title_formulas[doc[count].text]))
                             latex_input = str(title_formulas[doc[count].text])
-                            mathml_output = latex2mathml.converter.convert(latex_input)
-                            print(mathml_output)
+                            #mathml_output = latex2mathml.converter.convert(latex_input)
+                            #print(mathml_output)
                             print("\t" + "prev_token: " + prev_token.text + ": " + str(prev_token.pos_))
 
                             print("token count: ", len(title_tokenized)) 
@@ -391,8 +391,11 @@ def count_av_all_posts_once(db, cl, coll_name):
         ])
     except Exception as e:
         print(e)
-    total_post_count = list(total_post_dict)[0]["totalPostsLength"]
-    total_post_av = list(total_post_dict)[0]["totalPostsAv"]
+
+    total_post_stat = list(total_post_dict)[0]
+    total_post_count = total_post_stat["totalPostsLength"]
+    total_post_av = total_post_stat["totalPostsAv"]
+
     return total_post_count, total_post_av
 
 
