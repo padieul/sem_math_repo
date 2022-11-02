@@ -309,34 +309,7 @@ class MSE_DBS:
         print(counter_list)
         self._total_count = sum(counter_list)
 
-    """
-    def _get_mongo_dbs(self, num):
 
-        dbs = [] 
-        clients = [] 
-        
-        for i in range(num):
-
-            MONGODB_USER_NAME = self._sett["username"] 
-            MONGODB_PASSWORD = self._sett["password"] 
-            MONGODB_HOST = self._sett["host"] 
-            MONGODB_PORT = int(self._sett["port"]) + int(i)
-            MONGODB_AUTHENTICATION_DB = self._sett["db"]
-
-            uri_str = "mongodb://" + MONGODB_USER_NAME + ":" + MONGODB_PASSWORD + "@" + MONGODB_HOST + ":" + str(MONGODB_PORT)
-            client = MongoClient(uri_str)
-        
-            try:
-                client.admin.command("ping")
-            except errors.ConnectionFailure:
-                print("Server not available")
-
-            db = client[MONGODB_AUTHENTICATION_DB]
-            dbs.append(db)
-            clients.append(client)
-        
-        return dbs, clients
-    """ 
 
     def _calculate_access_intervals(self, multi_num, limit):
 
@@ -359,16 +332,18 @@ class MSE_DBS:
 
         return p_collection_intervals
 
-    def apply_once(self, all_threads_coll_name, func):
+    def apply_once(self, coll_name, func):
         self._db, self._client = self._get_mongo_db()
-        
+        return_val = None
         with self._client.start_session() as session:
             try:
-                func(self._db, self._client)
-            except:
-                ...
+                return_val = func(self._db, self._client, coll_name)
+            except Exception as e:
+                print(e)
+                print(e)
                 
         session.end_session()
+        return return_val
 
     def get_count(self):
         return self._total_count
@@ -376,5 +351,5 @@ class MSE_DBS:
     def reset_count(self):
         self._total_count = 0
     
-    
+
 
