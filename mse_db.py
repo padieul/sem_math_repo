@@ -332,14 +332,13 @@ class MSE_DBS:
 
         return p_collection_intervals
 
-    def apply_once(self, coll_name, func):
+    def apply_once(self, coll_name, func, data = {}):
         self._db, self._client = self._get_mongo_db()
         return_val = None
         with self._client.start_session() as session:
             try:
-                return_val = func(self._db, self._client, coll_name)
+                return_val = func(self._db, self._client, coll_name, data)
             except Exception as e:
-                print(e)
                 print(e)
                 
         session.end_session()
