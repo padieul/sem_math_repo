@@ -586,6 +586,22 @@ def count_m_type_occurences_once(db, cl, coll_name, data):
 
     return total_types_dict
 
+def get_m_types_both_once(db, cl, coll_name, data):
+
+    limit_count = data["limit_count"]
+    coll_name = coll_name + "_FORMULAS"
+    try:
+        both_types = db[coll_name].find({"f_decision": "both", 
+                                          "m_type": {"$ne": "UNK"}}).limit(limit_count)
+
+    except Exception as e:
+        print(e)
+
+    both_types_list = []
+    for type_dict in both_types:
+        both_types_list.append(type_dict)
+
+    return both_types_list
 
 # usage: ONLY WITH apply_once
 def count_all_post_threads_once(db, cl, coll_name, data):
