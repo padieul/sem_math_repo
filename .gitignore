@@ -6,6 +6,8 @@
 /dlmf-chapters-SimpleXML
 /conf 
 /print_outs
+/sem_math_env
+
 
 db_conf.json
 conf/storing_log.txt
