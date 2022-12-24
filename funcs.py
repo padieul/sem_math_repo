@@ -172,6 +172,31 @@ def migrate_formulas(db, cl, coll_name, single_post_thread):
 
     return count
 
+def migrate_tags_to_formulas(db, cl, coll_name, single_post_thread):
+    formulas_coll_name = coll_name + "_FORMULAS"
+    count = 0
+
+    # db[coll_name].update_one({"_id": _id}, {"$set": {"title": title_dict}})
+    unique_form_dict = {}
+    post_thread_id = single_post_thread["_id"]
+
+    tag_list = single_post_thread["tags"]
+    for formula in single_post_thread["formulas"]:
+
+        if formula["decision"] == "both" and not formula["type"] == "UNK":
+
+            f_id = str(post_thread_id) + "_" + formula["id"]
+
+            try:
+                db[formulas_coll_name].update_one({"f_id": f_id}, {"$set": {"tags": tag_list}})
+
+                count += 1
+            except:
+                ...
+
+    return count
+
+
 
 # TITLE RELATED FUNCTIONS
 # --------------------------------------------------------------------------------------------------------------------
@@ -612,6 +637,23 @@ def count_all_post_threads_once(db, cl, coll_name, data):
         ...
     return doc_count
 
+# for classification dataset creation
+def retrieve_m_types_both_once(db, cl, coll_name, data):
+
+    limit_count = data["limit_count"]
+    coll_name = coll_name + "_FORMULAS"
+    try:
+        both_types = db[coll_name].find({"f_decision": "both", 
+                                          "m_type": {"$ne": "UNK"}}).limit(limit_count)
+
+    except Exception as e:
+        print(e)
+
+    both_types_list = []
+    for type_dict in both_types:
+        both_types_list.append(type_dict)
+
+    return both_types_list
 
 # --------------------------------------------------------------------------------------------------------------------
 # --------------------------------------------------------------------------------------------------------------------

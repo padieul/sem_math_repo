@@ -4,6 +4,13 @@ import funcs               # provides data processing functions
 import matplotlib.pyplot as plt
 from matplotlib.ticker import ScalarFormatter
 
+from sem_math import TokenizeTransformer, FormulaType
+from mse_db import MSE_DBS 
+from pathlib import Path
+
+import pandas as pd
+
+
 # Chapter 1 and 2
 # -----------------------------------------------------------------------------------------
 
@@ -156,3 +163,72 @@ def print_examples_both(data, sel_coll_names, count_per_coll):
 
 # Chapter 4
 # -----------------------------------------------------------------------------------------
+
+def get_tokens(form_str):
+    r_val = None
+    parsed_structure = FormulaType(form_str).determine_formula_type()
+    if parsed_structure == None:
+        r_val = "COULD NOT PARSE"
+    try:
+        r_val = TokenizeTransformer().transform(parsed_structure)
+    except:
+        r_val = "COULD NOT TRANSFORM"
+
+    return r_val
+
+def retrieve_examples_both(datab, sel_coll_names, count_per_coll):
+    
+    count = 1
+    for coll in sel_coll_names:
+        print(coll + ": " + str(len(sel_coll_names)-count)+ " collections left")
+        coll_exs = datab.apply_once(coll, funcs.retrieve_m_types_both_once, {"limit_count": count_per_coll})
+        ####
+        #data = [[ex["f_id"], ex["m_type"], ex["lx_str"], ex["f_descriptor"], get_tokens(ex["lx_str"]), ex["tags"]] for ex in coll_exs]
+        data = []
+        for ex in coll_exs:
+            if "tags" in ex.keys():
+                data.append([ex["f_id"], ex["m_type"], ex["lx_str"], ex["f_descriptor"], get_tokens(ex["lx_str"]), ex["tags"]])
+        ###
+        columns_str = ["fid", "mtype", "exprstr", "mention", "tokens", "tags"]
+        #get_tokens(ex["lx_str"]), ex["tags"])
+        df = pd.DataFrame(data, columns=columns_str)
+        df.to_csv("print_outs/formula_data_" + str(coll) + ".csv", index=False, header=True)
+        count += 1
+        #for ex in coll_exs:
+            #print("ID: {}, TYPE: {}, EXPR: {}, DESCRIPTIVE MENTION: {}, TOKENS: {}, TAGS: {}".format(ex["f_id"], ex["m_type"], ex["lx_str"], ex["f_descriptor"], get_tokens(ex["lx_str"]), ex["tags"]))
+
+def add_tags_column_in_formulas(data, sel_coll_names, coll_sizes):
+
+    count = 1
+    for coll in sel_coll_names:
+        print(coll + ": " + str(len(sel_coll_names)-1)+ " collections left")
+        #migrated_count = data.apply_to_each(coll, funcs.migrate_tags_to_formulas, -1)
+        migrated_count = data.apply_to_each_multi(coll, 16, funcs.migrate_tags_to_formulas, (coll_sizes[coll] + 1))
+        count += 1
+    return migrated_count
+
+
+if __name__ == "__main__":
+
+    log_file_path = Path(".") / "conf" / "log.txt"              # processing log
+    db_settings_file_path = Path(".") / "conf" / "db_conf.json" # settings file for the db connection (local)
+    data = MSE_DBS("linux", db_settings_file_path, log_file_path)
+    """
+    sel_coll_names = ["algebra-precalculus", "analytic-geometry", "elementary-functions", \
+                      "elementary-number-theory", "elementary-set-theory", "euclidean-geometry", \
+                      "trigonometry"]
+    coll_sizes = {"algebra-precalculus": 43604, 
+                  "analytic-geometry": 5934,
+                  "elementary-functions": 515, 
+                  "elementary-number-theory": 34454,
+                  "elementary-set-theory": 26535,
+                  "euclidean-geometry": 8188,
+                  "trigonometry": 27356}
+
+    
+    add_tags_column_in_formulas(data, sel_coll_names, coll_sizes) 
+    """
+    sel_coll_names = ["analytic-geometry", "elementary-functions", \
+                      "elementary-number-theory", "elementary-set-theory", "euclidean-geometry", \
+                      "trigonometry"]
+    retrieve_examples_both(data, sel_coll_names, count_per_coll=10000)

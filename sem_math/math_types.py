@@ -1,9 +1,9 @@
 import spacy 
 from spacy.symbols import attr, NOUN
 import json
-from lark import Lark
+from lark import Lark, Transformer, Visitor
 import os
-
+from pathlib import Path
 
 class FormulaType:
     type_parser = None
@@ -21,7 +21,9 @@ class FormulaType:
         else:
             self._latex_str = latex_str 
         
-        self._grammar_file = "sem_math/grammar/type_grammar.lark"
+        #self._grammar_file = "sem_math/grammar/type_grammar.lark"
+        self._grammar_file = Path(".") / "sem_math" / "grammar" / "type_grammar.lark"
+        self._grammar_file = str(self._grammar_file.resolve())
         self._parsed_structure = None
         FormulaType.read_parser_grammar(self._grammar_file)
         self._math_type = "UNK"
@@ -44,6 +46,7 @@ class FormulaType:
         except Exception as e:
             some_val = e
             self._math_type = "UNK"
+        return self._parsed_structure
 
     def print_type(self):
         print("MATH-TYPE (formula): ", self._math_type)
@@ -54,8 +57,15 @@ class FormulaType:
         file = open(file_path, mode="r") 
         grammar_str = file.read() 
         file.close()
-        cls.type_parser = Lark(grammar_str, start="value", source_path = "C:\\Users\\prdie\\OneDrive\\Sources\\sem_math_repo\\sem_math", 
-                                                           import_paths = ["C:\\Users\\prdie\\OneDrive\\Sources\\sem_math_repo\\sem_math\\grammar\\"])
+        # self._grammar_file = Path(".") / "sem_math" / "grammar" / "type_grammar.lark"
+        # win_source_path = "C:\\Users\\prdie\\OneDrive\\Sources\\sem_math_repo\\sem_math", 
+        # win_import_paths = ["C:\\Users\\prdie\\OneDrive\\Sources\\sem_math_repo\\sem_math\\grammar\\"]
+        p_source_path = Path(".") / "sem_math" 
+        p_import_path = Path(".") / "sem_math" / "grammar"
+        p_source_path = str(p_source_path.resolve())
+        p_import_path = str(p_import_path.resolve())
+        cls.type_parser = Lark(grammar_str, start="value", source_path = p_source_path,
+                                                           import_paths = [p_import_path])
     def get_parsed_structure(self, text):
         self._parsed_structure = FormulaType.type_parser.parse(text)
 
@@ -245,6 +255,7 @@ if __name__ == "__main__":
     formula_token = "f_1_0"
     token_list = ["introduce", "new", "autonomous", "cars", "Let", "f_1_0", "be", "a", "function", ".", "That"]
     
+    """
     formula_c_type = FormulaContextType("kb/type_context_keywords.json", token_list, formula_token, formulas_dict, 3)
     #formula_c_type.determine_formula_type(conditions = {"has_pos": ("NOUN", "left"), "has_pos_between": ("PREP", "NOUN"), "type_keyword_pos": "NOUN"})
     matching_rules = [ {"descriptor_pos": ("NOUN", "left"), "formula_dep": "not pobj"},  ### RULE 1
@@ -252,3 +263,85 @@ if __name__ == "__main__":
     formula_c_type.find_type_descriptors(matching_rules)
     #formula_c_type.determine_formula_type(priority = 1)  # 0 - rule1, 1 - rule2
     print(formula_c_type.get_type_descriptors())
+    """
+
+    
+    set_strs = [
+                    #"\\cal P^n(\Bbb N)", \
+                    "\\mathbb{N}", \
+                    "S \\times S", \
+                    "\\mathbb{R}", \
+                    "\\mathbb{R}^2", \
+                    "A \\cup A", \
+                    "(A \\cap B) \\cup C ", \
+                    "(S \\times B) \\cup C^G", \
+                    "S \\cup S \\cup S", \
+                    "(A \\cup B) \\times (D \\cap C)", \
+                    "\\mathbb R^{2}", \
+                    "\\mathbb R^N", \
+                    "[0,1]", \
+                    "[0,1/2]", \
+                    "\\mathbb N", \
+                    "(-1, 1)", \
+                    "(a, b)", \
+                    #"(-1/n,1/n)", \
+                    #"\{\; R\;\; | \\quad R \;\\subset\; V \\times N \}", \
+                    #"\{(a,c),(a,d),(b,c),(b,d)\}", \
+                    #"\{ n + \\frac{(-1)^n}{n} : n \\in \\mathbb{N}\}", \
+                    "\{1,2,3\}", \
+                ]   
+    
+    class TreeToTok(Visitor):
+        def __init__(self):
+            self._some_list = []
+        
+        def set_empty(self, arg):
+            self._some_list.append(arg)
+
+        def SET_BASIC(self, arg):
+            self._some_list.append(arg)
+
+        """
+        def set_expr(self, arg):
+            for elem in arg.children:
+                if not elem == None:
+                    token_type = elem.type 
+                    token_val = elem.value
+                    if not token_type == "RULE":
+                        self._some_list.append(token_val)
+        """
+        
+        def set_constant(self, arg):
+            for elem in arg.children:
+                if not elem == None:
+                    token_type = elem.type 
+                    token_val = elem.value
+                    if not token_type == "RULE":
+                        self._some_list.append(token_val)
+
+            #self._some_list.append(arg)
+        def set_operator_set(self,arg):
+            for elem in arg.children:
+                if not elem == None:
+                    token_type = elem.type 
+                    token_val = elem.value
+                    if not token_type == "RULE":
+                        self._some_list.append(token_val)
+        
+        def set_constant_custom(self, arg):
+            for elem in arg.children:
+                if not elem == None:
+                    token_type = elem.type 
+                    token_val = elem.value
+                    if not token_type == "RULE":
+                        self._some_list.append(token_val)
+
+        def cmd_times(self, arg):
+            self._some_list.append(arg)
+
+        def get_some_list(self):
+            return self._some_list
+
+        
+
+

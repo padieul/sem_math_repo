@@ -1,16 +1,11 @@
-SET_CONSTANT: SET_EMPTY 
-            | SET_NATURAL 
-            | SET_INTEGER 
-            | SET_RATIONAL 
-            | SET_ALGEBRAIC 
-            | SET_REAL 
-            | SET_COMPLEX
+set_empty: SET_EMPTY
 
-SET_OPERATOR_SET: OP_UNION
+
+set_operator_set: OP_UNION
                 | OP_INTERSEC 
                 | OP_CART
 
-SETSET_OPERATOR_BOOL: OP_PR_SUBSET
+setset_operator_bool: OP_PR_SUBSET
                     | OP_PR_SUPERSET 
                     | OP_SUBSET 
                     | OP_SUPERSET
@@ -19,20 +14,33 @@ SETARB_OPERATOR_BOOL: OP_IN
                     | OP_NI 
                     | OP_NOTIN
 
-SET_EMPTY:     "\\varnothing"
-SET_NATURAL:   "\\mathbb{N}"
-SET_INTEGER:   "\\mathbb{Z}"
-SET_RATIONAL:  "\\mathbb{Q}"
-SET_ALGEBRAIC: "\\mathbb{A}"
-SET_REAL:      "\\mathbb{R}"
-SET_COMPLEX:   "\\mathbb{C}"
-SET_FAT:       "\\mathbb"
+SET_EMPTY:   "\\varnothing"
+C_NATURAL:   "N"
+C_INTEGER:   "Z"
+C_RATIONAL:  "Q"
+C_ALGEBRAIC: "A"
+C_REAL:      "R"
+C_COMPLEX:   "C"
+
+SET_C: SET_EMPTY 
+     | C_NATURAL 
+     | C_INTEGER 
+     | C_RATIONAL 
+     | C_ALGEBRAIC 
+     | C_REAL 
+     | C_COMPLEX
+
+L_BRACE: "{" -> lbrace
+R_BRACE: "}" -> rbrace
+
+SET_FAT:    "\\mathbb"
+SET_BASIC: SET_FAT "{" SET_C "}"
 
 OP_UNION .2 :       "\\cup"
 OP_INTERSEC .2 :    "\\cap"
 OP_CART .1 :        "\\times"
 
-OP_TO_SET_POW .2 :  "^"
+!op_to_set_pow .2 :  "^"
 
 OP_IN:          "\\in"
 OP_NI:          "\\ni"
@@ -42,6 +50,5 @@ OP_PR_SUBSET:    "\\subset"
 OP_PR_SUPERSET:  "\\supset"
 OP_SUBSET:       "\\subseteq"
 OP_SUPERSET:     "\\supseteq"
-
 
 %import common (WS, NEWLINE, INT, NUMBER, LETTER)

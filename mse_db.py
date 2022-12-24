@@ -127,32 +127,43 @@ class MSE_Thread:
 
 class MSE_DBS:
 
-    def __init__(self, sett_file_path, log_file_path = "conf\\analyzer_log.txt"):
+    def __init__(self, conf_type, sett_file_path, log_file_path = "conf\\analyzer_log.txt"):
 
         self._log_file_path = log_file_path
         self._sett_file_path = sett_file_path 
 
-        self._sett = self._get_db_settings(self._sett_file_path)
+        self._sett = self._get_db_settings(self._sett_file_path, conf_type)
         #self._db, self._client = self._get_mongo_db()
         self._dbs, self._clients = [], []
         self._total_count = 0
 
-    def _get_db_settings(self, s_filename):
+    def _get_db_settings(self, s_filename, conf_type):
 
         with open(s_filename, "r") as f:
-            db_settings = json.load(f)
+            temp_dict = json.load(f)
+            if conf_type == "win":
+                db_settings = temp_dict[conf_type]
+            elif conf_type == "linux":
+                db_settings = temp_dict[conf_type]
+                db_settings["username"] = ""
+                db_settings["password"] = ""
+
         f.close()
         return db_settings
 
     def _get_mongo_db(self):
 
-        MONGODB_USER_NAME = self._sett["username"] 
-        MONGODB_PASSWORD = self._sett["password"] 
         MONGODB_HOST = self._sett["host"] 
         MONGODB_PORT = self._sett["port"] 
         MONGODB_AUTHENTICATION_DB = self._sett["db"]
 
-        uri_str = "mongodb://" + MONGODB_USER_NAME + ":" + MONGODB_PASSWORD + "@" + MONGODB_HOST + ":" + str(MONGODB_PORT)
+        if self._sett["username"] == "" and self._sett["password"] == "":
+            uri_str = "mongodb://" + MONGODB_HOST + ":" + str(MONGODB_PORT)
+        else:
+            MONGODB_USER_NAME = self._sett["username"] 
+            MONGODB_PASSWORD = self._sett["password"] 
+            uri_str = "mongodb://" + MONGODB_USER_NAME + ":" + MONGODB_PASSWORD + "@" + MONGODB_HOST + ":" + str(MONGODB_PORT)
+
         client = MongoClient(uri_str)
         
         try:
@@ -221,20 +232,21 @@ class MSE_DBS:
 
         def apply_in_process(sett_dict, counter_ar, p_count, all_threads_coll_name, func, doc_interval):
             #print("ALIVE: " + str(p_count))
-            MONGODB_USER_NAME = sett_dict["username"] 
-            MONGODB_PASSWORD = sett_dict["password"] 
+    
+            ############
             MONGODB_HOST = sett_dict["host"] 
-            MONGODB_PORT = int(sett_dict["port"]) # + int(p_count)
+            MONGODB_PORT = sett_dict["port"] 
             MONGODB_AUTHENTICATION_DB = sett_dict["db"]
 
-            uri_str = "mongodb://" + MONGODB_USER_NAME + ":" + MONGODB_PASSWORD + "@" + MONGODB_HOST + ":" + str(MONGODB_PORT)
-            client = MongoClient(uri_str, minPoolSize = 4)
-        
-            try:
-                client.admin.command("ping")
-            except errors.ConnectionFailure:
-                print("Server not available")
+            if sett_dict["username"] == "" and sett_dict["password"] == "":
+                uri_str = "mongodb://" + MONGODB_HOST + ":" + str(MONGODB_PORT)
+            else:
+                MONGODB_USER_NAME = sett_dict["username"] 
+                MONGODB_PASSWORD = sett_dict["password"] 
+                uri_str = "mongodb://" + MONGODB_USER_NAME + ":" + MONGODB_PASSWORD + "@" + MONGODB_HOST + ":" + str(MONGODB_PORT)
 
+            client = MongoClient(uri_str)
+            ############
             db = client[MONGODB_AUTHENTICATION_DB]
             #print("ALIVE II: " + str(p_count) + " -- doc: " + str(doc_interval))
             limit_left = doc_interval[0]
