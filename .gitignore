@@ -7,6 +7,7 @@
 /conf 
 /print_outs
 /sem_math_env
+/wandb
 
 
 db_conf.json
