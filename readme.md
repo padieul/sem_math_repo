@@ -1,7 +1,6 @@
-### Semantic enrichment of mathematical text
+### Learning Formula Embeddings through Mathematical Text Classification
 
 This repository contains the following items:
-
 
 * overview.ipynb - A general overview of the MSE dataset and an intermediate analysis of the semantic math extraction procedure (it makes use of overview_func.py and /images)
 * utils.py - a script with preprocessing methods that were used to process the large XML file which included the initial datset
@@ -15,3 +14,4 @@ This repository contains the following items:
     - comparer.py - the Comparer class includes the arbitration mechanism which helps to assign a semantic type to a formula
     - /tests - includes unit tests for the FormulaType class methods
     - /grammar - contains .lark files with formula parser grammar rules
+* classification - contains different classification variations that are used to train formula embeddings
