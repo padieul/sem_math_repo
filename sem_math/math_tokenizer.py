@@ -1,10 +1,35 @@
-from .math_types import FormulaType 
-from lark import Transformer
+#from .math_types import FormulaType 
+#import math_types.FormulaType as FormulaType
+if not __name__ == "__main__":
+    from .math_types import FormulaType
+    from .ft_transformer import FormulaTreeTransformer
 
-class TokenizeTransformer(Transformer):
+class SemMathTokenizer:
 
-    # helper function that reduces nested lists 
-    # to lists of strings recursively
+    def __init__(self, parsed_structure, no_subtypes=True):
+        
+        self._parsed_formula_tree = parsed_structure
+        self._tokenizer = FormulaTreeTransformer(no_subtypes)
+        self._no_subtypes = no_subtypes
+
+        self._tokenization = None
+
+    def get_tokens(self):
+        self._tokenization = self._tokenize()
+        if self._no_subtypes:
+            return self._tokenization
+        elif not self._no_subtypes:
+            return self._serialize(self._tokenization)
+
+    def display_tokens(self, retokenize=False):
+        if self._tokenization == None or retokenize:
+            self._tokenization = self._tokenize()
+
+        if self._no_subtypes:
+            print(self._tokenization)
+        elif not self._no_subtypes:
+            print(self._serialize(self._tokenization))
+
     def _reduce_nested_list(self, n_list):
         return_list = []
         for elem in n_list:
@@ -16,303 +41,54 @@ class TokenizeTransformer(Transformer):
                     return_list.append(t_elem)
         return list(return_list)
 
-    def _reduce(self, arg):
-        if isinstance(arg, list):
-            if len(arg) == 1:
-                if arg[0].__class__.__name__ == "Tree":
-                    return arg[0].children
-                elif arg[0].__class__.__name__ == "Token":
-                    return arg[0].value
-                elif isinstance(arg[0], list):
-                    if len(arg[0]) == 1:
-                        return arg[0][0]
-                    elif len(arg[0]) > 1:
-                        return self._reduce_nested_list(arg[0])
-                elif isinstance(arg[0], str):
-                    return arg[0]
-            elif len(arg) > 1:
-                return self._reduce_nested_list(arg)
-        return arg[0]
+    def _tokenize(self):
+        try:
+            tokenization = self._tokenizer.transform(self._parsed_formula_tree)
+        except Exception as e:
+            print(e)
+        return tokenization
 
-    ###------------------------------------------------------
-    # Main rules
-    ###------------------------------------------------------
-
-    def set(self,arg):
-        if isinstance(arg, list):
-            """
-            if len(arg) == 1 and isinstance(arg[0], str):
+    def _serialize(self, arg):
+        def serialize_recur(arg):
+            if isinstance(arg, str):
                 return arg
-            return arg[0]
-            """
+            elif isinstance(arg, tuple):
+                if len(arg) == 2:
+                    return self._reduce_nested_list([arg[1], serialize_recur(arg[0])])
+                else:
+                    ...
+            elif isinstance(arg, list):
+                if len(arg) == 1:
+                    return arg[0]
+                elif len(arg) > 1:
+                    return self._reduce_nested_list([serialize_recur(elem) for elem in arg])
 
-            if len(arg) == 1:
-                return arg[0]
-                #if isinstance(arg[0], str):
-                    #return arg[0]
-            elif len(arg) > 1:
-                return self._reduce_nested_list(arg)
-                """
-                return_list
-                for elem in arg:
-                    if isinstance(elem, str):
-                        return_list.append(elem)
-                """
-        else:
-            return arg
+        def clean_recur(arg):
+            if isinstance(arg, str):
+                return None
+            elif isinstance(arg, tuple):
+                m_tokens, m_type = arg
+                temp_m_tokens = clean_recur(m_tokens)
+                if temp_m_tokens == None:
+                    return m_type
+                else:
+                    return (temp_m_tokens, m_type)
+            elif isinstance(arg, list):
+                if len(arg) == 1:
+                    return clean_recur(arg[0])
+                else:
+                    return [clean_recur(elem) for elem in arg]
 
-    def scal(self,arg):
-        if isinstance(arg, list):
-            if len(arg) == 1:
-                return arg[0]
-            elif len(arg) > 1:
-                return self._reduce_nested_list(arg)   
-        else:
-            return arg
-
-    def func(self,arg):
-        if isinstance(arg, list):
-            if len(arg) == 1:
-                return arg[0]
-            elif len(arg) > 1:
-                return self._reduce_nested_list(arg)   
-        else:
-            return arg
-
-    def set_expr(self, arg):
-        return self._reduce(arg)
-    
-    def explset(self, arg):
-        return self._reduce(arg)
-
-    def set_constant_custom(self, arg):
-        if isinstance(arg, list):
-            temp_list = [i for i in arg if i != None]
-            if len(temp_list) == 1:
-                return temp_list[0]
-            else:
-                return temp_list
-
-    def func_def(self, arg):
-        return self._reduce(arg)
-
-    def func_expr(self, arg):
-        return self._reduce(arg)
-
-    def mapping(self, arg):
-        return self._reduce(arg)
-
-    def func_name(self, arg):
-        return self._reduce(arg)
-    
-    def func_name_arg(self, arg):
-        return self._reduce(arg)
-
-    def func_composed(self, arg):
-        return self._reduce(arg)
-
-    def func_names(self, arg):
-        return self._reduce(arg)
-
-    def func_enumeration(self, arg):
-        return self._reduce(arg)
-
-    def func_composed(self, arg):
-        return self._reduce(arg)
-
-    def func_arg(self, arg):
-        return self._reduce(arg)
-
-    def set_enumeration(self, arg):
-        return self._reduce(arg)
-
-    # set_constant: set_empty | SET_BASIC
-    def set_constant(self, arg):
-        return self._reduce(arg)
-
-    def enumuration(self, arg):
-        return self._reduce(arg)
-
-    def item(self, arg):
-        return self._reduce(arg)
-
-    def interval(self, arg):
-        return self._reduce(arg)
-
-    def expr(self, arg):
-        return self._reduce(arg)
-
-    def additive(self, arg):
-        return self._reduce(arg)
-
-    def mp(self, arg):
-        return self._reduce(arg)
-
-    def unary(self, arg):
-        return self._reduce(arg)
-
-    # set_atom: upper_letter | set_constant
-    def set_atom(self, arg):
-        return self._reduce(arg)
-
-    def postfix(self, arg):
-        return self._reduce(arg)
-    
-    def exp(self, arg):
-        return self._reduce(arg)
-
-    def comp(self, arg):
-        return self._reduce(arg)
-
-    def group(self, arg):
-        return self._reduce(arg)
-
-    def expr_atom(self, arg):
-        return self._reduce(arg)
-
-    ###----------------------------------------
-    #  simple rules
-    ###----------------------------------------
-    def postfix_op(self, arg):
-        return arg[0]
-
-    def singed_number(self, arg):
-        return arg[0]
-
-    def number(self, arg):
-        return arg[0]
-
-    # integer: digit+
-    def integer(self, arg):
-        return arg[0]
-
-    # digit: "0".."9"
-    def digit(self, arg):
-        # arg[0].value == "anon"
-        return arg[0].value
-
-    def op_to_set_pow(self, arg):
-        # arg[0].type == "CARET"
-        if isinstance(arg[0], str):
-            return arg[0]
-        else:
-            return arg[0].value
-        
-    def set_operator_set(self, arg):
-        # 
-        return arg[0].value
-
-    def upper_letter(self, arg):
-        return arg[0].value
-
-    def lower_letter(self, arg):
-        return arg[0].value
-
-    ###----------------------------------------
-    #  terminals
-    ###----------------------------------------
-    def CMD_TIMES(self, arg):
-        return arg[0].value
-
-    def L_PAREN(self, arg):
-        return arg.value
-    
-    def R_PAREN(self, arg):
-        return arg.value 
-
-    def L_BRACE(self, arg):
-        return arg.value 
-
-    def R_BRACE(self, arg):
-        return arg.value
-
-    def L_BRACE_LITERAL(self, arg):
-        return arg.value
-
-    def R_BRACE_LITERAL(self, arg):
-        return arg.value
-
-    def L_BRACKET(self, arg):
-        return arg.value 
-    
-    def R_BRACKET(self, arg):
-        return arg.value
-
-    def SET_FAT(self, arg):
-        # arg.type == set_fat
-        return arg.value
-
-    def ADD(self, arg):
-        #arg.type == add
-        return arg.value 
-
-    def SUB(self, arg):
-        #arg.type == sub 
-        return arg.value 
-
-    def MUL(self, arg):
-        #arg.type == sub 
-        return arg.value 
-    
-    def DIV(self, arg):
-        #arg.type == sub 
-        return arg.value 
-
-    def BANG(self, arg):
-        #arg.type == sub 
-        return arg.value
-
-    def BAR(self, arg):
-        #arg.type == sub 
-        return arg.value 
-
-    def CARET(self, arg):
-        #arg.type == sub 
-        return arg.value 
-
-    def UNDERSCORE(self, arg):
-        #arg.type == sub 
-        return arg.value  
-
-    def COMMA(self, arg):
-        return arg.value 
-
-    def EQUAL(self, arg):
-        return arg.value 
-
-    def COLON(self, arg):
-        return arg.value
-
-    def CMD_CDOT(self, arg):
-        return arg.value
-    
-    def CMD_DIV(self, arg):
-        return arg.value
-    
-    def CMD_FRAC(self, arg):
-        return arg.value
-    
-    def CMD_BINOM(self, arg):
-        return arg.value
-
-    def CMD_DBINOM(self, arg):
-        return arg.value
-
-    def CMD_TBINOM(self, arg):
-        return arg.value
-    
-    def FUNC_NORMAL(self, arg):
-        return arg.value
-
-    def OP_FUNC_COMP(self, arg):
-        return arg.value
-
-    def TO(self, arg):
-        return arg.value
+        # TODO: do something to serialize
+        arg = clean_recur(arg)
+        arg = serialize_recur(arg)
+        return arg
 
 
 
 if __name__ == "__main__":
+    from math_types import FormulaType
+    from ft_transformer import FormulaTreeTransformer
     """
     formulas_dict = {"f_1_0": "A \\subset B", "f_1_1": "C + D"}
     formula_token = "f_1_0"
@@ -352,13 +128,15 @@ if __name__ == "__main__":
                     "\{1,2,3\}", \
                 ]   
 
-    func_strs = [   "f", \
+    func_strs = [   "f : X \\times X \\to X", \
+                    "f : X \\to X", \
+                    "f", \
                     "f : X \\to 2^Y", \
                     "f : X \\to \{1,2,3\}", \
                     "f : \\mathbb{Q} \\rightarrow \\{1,2,3\\}", \
                     "F\\colon A\\times A\\to A",  \
                     "f,g:A\\to A", \
-                    #"k: \omega + \omega \rightarrow \mathbb{R}", \
+                    "k: \omega + \omega \rightarrow \mathbb{R}", \
                     "\\tan", \
                     "f(x) = x+10", \
                     "g(x) = 3x", \
@@ -373,20 +151,25 @@ if __name__ == "__main__":
                 ] 
 
     scal_strs = [   
-                    #"(2n+1)", \
-                    #"\\frac{n!}{(n-k)!}", \
-                    #"(b + 2 \cdot a + d \cdot g + 3^{8})", \
-                    #"\\binom{k+3}{n-1}", \
-                    #"(b+ c \cdot b) \cdot (a + b \cdot x)", \
-                    #"(((((a + b)) + (a + (a + (b - a))))))", \
-                    #"2n - 1", \
+                    "(2n+1)", \
+                    "\\frac{n!}{(n-k)!}", \
+                    "(b + 2 \cdot a + d \cdot g + 3^{8})", \
+                    "\\binom{k+3}{n-1}", \
+                    "(b+ c \cdot b) \cdot (a + b \cdot x)", \
+                    "(((((a + b)) + (a + (a + (b - a))))))", \
+                    "2n - 1", \
                 ]  
 
     print("*******************************************************")
     print("*******************************************************")
     print("*******************************************************")
-    for st in func_strs: #+ set_strs + func_strs:
+    for st in set_strs: #+ set_strs + func_strs:
         parsed_structure = FormulaType(st).determine_formula_type()
+        #print("STANDARD: ")
+        if parsed_structure == None:
+            continue
+        #print(parsed_structure.pretty())
+        
         print("========================================================")
         print("Formula: ", st)
         
@@ -396,6 +179,17 @@ if __name__ == "__main__":
         #print("Parsed structure: ")
         #print(parsed_structure.pretty())
         try:
-            print("Tokenization: ", TokenizeTransformer().transform(parsed_structure))
-        except:
+            sem_tok_no_subtypes = SemMathTokenizer(parsed_structure, True)
+            sem_tok_with_subtypes = SemMathTokenizer(parsed_structure, False)
+            
+            #print("Tokenization: **********************************************************")
+            #print("Bare tokens: ")
+    
+            sem_tok_no_subtypes.display_tokens()
+            #print("Tokens with subtypes: ")
+        
+            sem_tok_with_subtypes.display_tokens()
+            #print("*************************************************************************")
+        except Exception as e:
+            print(e)
             print("Could not transform parsed structure")

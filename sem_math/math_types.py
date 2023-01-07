@@ -64,8 +64,8 @@ class FormulaType:
         p_import_path = Path(".") / "sem_math" / "grammar"
         p_source_path = str(p_source_path.resolve())
         p_import_path = str(p_import_path.resolve())
-        cls.type_parser = Lark(grammar_str, start="value", source_path = p_source_path,
-                                                           import_paths = [p_import_path])
+        cls.type_parser = Lark(grammar_str, start="value", keep_all_tokens=True, source_path = p_source_path,
+                                                                                 import_paths = [p_import_path])
     def get_parsed_structure(self, text):
         self._parsed_structure = FormulaType.type_parser.parse(text)
 
