@@ -4,7 +4,7 @@ import funcs               # provides data processing functions
 import matplotlib.pyplot as plt
 from matplotlib.ticker import ScalarFormatter
 
-from sem_math import TokenizeTransformer, FormulaType
+from sem_math import FormulaType, SemMathTokenizer
 from mse_db import MSE_DBS 
 from pathlib import Path
 
@@ -170,7 +170,23 @@ def get_tokens(form_str):
     if parsed_structure == None:
         r_val = "COULD NOT PARSE"
     try:
-        r_val = TokenizeTransformer().transform(parsed_structure)
+        sem_tok_no_subtypes = SemMathTokenizer(parsed_structure, True)
+        r_val = sem_tok_no_subtypes.get_tokens()
+        #r_val = TokenizeTransformer().transform(parsed_structure)
+    except:
+        r_val = "COULD NOT TRANSFORM"
+
+    return r_val
+
+def get_type_tokens(form_str):
+    r_val = None
+    parsed_structure = FormulaType(form_str).determine_formula_type()
+    if parsed_structure == None:
+        r_val = "COULD NOT PARSE"
+    try:
+        sem_tok_with_subtypes = SemMathTokenizer(parsed_structure, False)
+        r_val = sem_tok_with_subtypes.get_tokens()
+        #r_val = TokenizeTransformer().transform(parsed_structure)
     except:
         r_val = "COULD NOT TRANSFORM"
 
@@ -187,7 +203,7 @@ def retrieve_examples_both(datab, sel_coll_names, count_per_coll):
         data = []
         for ex in coll_exs:
             if "tags" in ex.keys():
-                data.append([ex["f_id"], ex["m_type"], ex["lx_str"], ex["f_descriptor"], get_tokens(ex["lx_str"]), ex["tags"]])
+                data.append([ex["f_id"], ex["m_type"], ex["lx_str"], ex["f_descriptor"], get_tokens(ex["lx_str"]), get_type_tokens(ex["lx_str"]), ex["tags"]])
         ###
         columns_str = ["fid", "mtype", "exprstr", "mention", "tokens", "tags"]
         #get_tokens(ex["lx_str"]), ex["tags"])
