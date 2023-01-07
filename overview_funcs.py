@@ -205,7 +205,7 @@ def retrieve_examples_both(datab, sel_coll_names, count_per_coll):
             if "tags" in ex.keys():
                 data.append([ex["f_id"], ex["m_type"], ex["lx_str"], ex["f_descriptor"], get_tokens(ex["lx_str"]), get_type_tokens(ex["lx_str"]), ex["tags"]])
         ###
-        columns_str = ["fid", "mtype", "exprstr", "mention", "tokens", "tags"]
+        columns_str = ["fid", "mtype", "exprstr", "mention", "tokens", "type_tokens", "tags"]
         #get_tokens(ex["lx_str"]), ex["tags"])
         df = pd.DataFrame(data, columns=columns_str)
         df.to_csv("print_outs/formula_data_" + str(coll) + ".csv", index=False, header=True)
@@ -246,5 +246,5 @@ if __name__ == "__main__":
     """
     sel_coll_names = ["analytic-geometry", "elementary-functions", \
                       "elementary-number-theory", "elementary-set-theory", "euclidean-geometry", \
-                      "trigonometry"]
+                      "trigonometry", "algebra-precalculus"]
     retrieve_examples_both(data, sel_coll_names, count_per_coll=10000)
