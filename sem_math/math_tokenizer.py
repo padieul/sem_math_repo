@@ -44,9 +44,32 @@ class SemMathTokenizer:
     def _tokenize(self):
         try:
             tokenization = self._tokenizer.transform(self._parsed_formula_tree)
+            if self._no_subtypes:
+                tokenization = self._merge_special_tokens(tokenization)
         except Exception as e:
             print(e)
         return tokenization
+
+    def _merge_special_tokens(self, arg_list):
+        return self._merge_numeric_tokens(arg_list)
+
+    def _merge_numeric_tokens(self, arg_list):
+        new_arg_list = []
+        numeric_str = ""
+        for token in arg_list:
+            if token.isnumeric():
+                numeric_str += token
+            else:
+                if not numeric_str == "":
+                    new_arg_list.append(numeric_str)
+                    numeric_str = ""
+                else:
+                    ...
+                new_arg_list.append(token)      
+
+        if not numeric_str == "":
+            new_arg_list.append(numeric_str)
+        return new_arg_list
 
     def _serialize(self, arg):
         def serialize_recur(arg):
@@ -103,6 +126,8 @@ if __name__ == "__main__":
     """
 
     
+
+    """
     set_strs = [
                     #c"\\cal P^n(\Bbb N)", \
                     "\\mathbb{N}", \
@@ -127,6 +152,13 @@ if __name__ == "__main__":
                     #c"\{ n + \\frac{(-1)^n}{n} : n \\in \\mathbb{N}\}", \
                     "\{1,2,3\}", \
                 ]   
+    """
+    set_strs = [
+                   "234",
+                   "234 + f", 
+                   "145-7124",
+                   "256 * 4135 + f(134)"
+               ]
 
     func_strs = [   "f : X \\times X \\to X", \
                     "f : X \\to X", \
