@@ -8,6 +8,7 @@
 /print_outs
 /sem_math_env
 /wandb
+/classification/wandb
 
 
 db_conf.json
