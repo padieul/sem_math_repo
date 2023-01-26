@@ -213,6 +213,29 @@ def retrieve_examples_both(datab, sel_coll_names, count_per_coll):
         #for ex in coll_exs:
             #print("ID: {}, TYPE: {}, EXPR: {}, DESCRIPTIVE MENTION: {}, TOKENS: {}, TAGS: {}".format(ex["f_id"], ex["m_type"], ex["lx_str"], ex["f_descriptor"], get_tokens(ex["lx_str"]), ex["tags"]))
 
+def retrieve_examples_unk(datab, sel_coll_names, count_per_coll):
+    
+    count = 1
+    for coll in sel_coll_names:
+        print(coll + ": " + str(len(sel_coll_names)-count)+ " collections left")
+        coll_exs = datab.apply_once(coll, funcs.retrieve_m_types_unk_long, {"limit_count": count_per_coll})
+        ####
+        #data = [[ex["f_id"], ex["m_type"], ex["lx_str"], ex["f_descriptor"], get_tokens(ex["lx_str"]), ex["tags"]] for ex in coll_exs]
+        data = []
+        for ex in coll_exs:
+            if "tags" in ex.keys():
+                data.append([ex["f_id"], ex["m_type"], ex["lx_str"], ex["f_descriptor"], ex["tags"]])
+        ###
+        columns_str = ["fid", "mtype", "exprstr", "mention", "tags"]
+        #get_tokens(ex["lx_str"]), ex["tags"])
+        df = pd.DataFrame(data, columns=columns_str)
+        df.to_csv("print_outs/formula_data_unk_" + str(coll) + ".csv", index=False, header=True)
+        count += 1
+        #for ex in coll_exs:
+            #print("ID: {}, TYPE: {}, EXPR: {}, DESCRIPTIVE MENTION: {}, TOKENS: {}, TAGS: {}".format(ex["f_id"], ex["m_type"], ex["lx_str"], ex["f_descriptor"], get_tokens(ex["lx_str"]), ex["tags"]))
+
+
+
 def add_tags_column_in_formulas(data, sel_coll_names, coll_sizes):
 
     count = 1
@@ -244,7 +267,14 @@ if __name__ == "__main__":
     
     add_tags_column_in_formulas(data, sel_coll_names, coll_sizes) 
     """
+
+    """
     sel_coll_names = ["analytic-geometry", "elementary-functions", \
                       "elementary-number-theory", "elementary-set-theory", "euclidean-geometry", \
                       "trigonometry", "algebra-precalculus"]
-    retrieve_examples_both(data, sel_coll_names, count_per_coll=10000)
+    """
+    sel_coll_names = ["elementary-functions", \
+                      "elementary-number-theory", "elementary-set-theory", "euclidean-geometry", \
+                      "trigonometry", "algebra-precalculus"]
+
+    retrieve_examples_unk(data, sel_coll_names, count_per_coll=500)

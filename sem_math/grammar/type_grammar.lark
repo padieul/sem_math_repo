@@ -77,6 +77,7 @@ set_expr: (set_expr (set_operator_set|op_to_set_pow) set_expr) ((set_operator_se
          | (integer op_to_set_pow set_expr) | (set_expr op_to_set_pow integer)
          | set_constant_custom
          | set_atom 
+         | explset
 set_enumeration: enumeration
 set_atom: upper_letter | set_constant
 set_constant_custom: [SET_FAT] upper_letter [CARET (expr_atom | L_BRACE expr R_BRACE) subexpr? | comp]

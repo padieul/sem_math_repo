@@ -646,6 +646,7 @@ def retrieve_m_types_both_once(db, cl, coll_name, data):
         both_types = db[coll_name].find({"f_decision": "both", 
                                           "m_type": {"$ne": "UNK"}}).limit(limit_count)
 
+    # {"f_decision": "formula", "m_type": {"$ne": "UNK"}, $expr: { $gt: [{ $strLenCP: '$lx_str' }, 20] }}
     except Exception as e:
         print(e)
 
@@ -655,5 +656,22 @@ def retrieve_m_types_both_once(db, cl, coll_name, data):
 
     return both_types_list
 
+
+def retrieve_m_types_unk_long(db, cl, coll_name, data):
+
+    limit_count = data["limit_count"]
+    coll_name = coll_name + "_FORMULAS"
+    try:
+        both_types = db[coll_name].find({"f_decision": "both", 
+                                         "m_type": "UNK"}).limit(limit_count)
+
+    except Exception as e:
+        print(e)
+
+    both_types_list = []
+    for type_dict in both_types:
+        both_types_list.append(type_dict)
+
+    return both_types_list
 # --------------------------------------------------------------------------------------------------------------------
 # --------------------------------------------------------------------------------------------------------------------
