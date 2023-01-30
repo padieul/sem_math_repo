@@ -259,3 +259,4 @@ if __name__ == "__main__":
         num_copied, num_total = copy_to_threads(datab, client, post_file_name)
         print("******************************************************************************")
         write_to_copy_log(post_file_name, num_copied, num_total, log_file_name)
+

@@ -8,7 +8,12 @@ from sem_math import FormulaType, SemMathTokenizer
 from mse_db import MSE_DBS 
 from pathlib import Path
 
+from wrapt_timeout_decorator import * # use with care on win systems
+
+
 import pandas as pd
+
+from tqdm import tqdm
 
 
 # Chapter 1 and 2
@@ -235,7 +240,89 @@ def retrieve_examples_unk(datab, sel_coll_names, count_per_coll):
             #print("ID: {}, TYPE: {}, EXPR: {}, DESCRIPTIVE MENTION: {}, TOKENS: {}, TAGS: {}".format(ex["f_id"], ex["m_type"], ex["lx_str"], ex["f_descriptor"], get_tokens(ex["lx_str"]), ex["tags"]))
 
 
+def retrieve_examples_and_write_to_file(datab, sel_coll_names,l_th_10_size, sh_th_10_size):
+    """
+    @timeout(2)
+    def execute(ex):
+        return [ex["f_id"], ex["m_type"], ex["lx_str"], ex["f_descriptor"], get_tokens(ex["lx_str"]), get_type_tokens(ex["lx_str"]), ex["tags"]]
+    """
 
+    count = 0
+    for coll in sel_coll_names:
+        print(coll + ": " + str(len(sel_coll_names)-count)+ " collections left")
+        coll_exs = datab.apply_once(coll, funcs.retrieve_m_types_formula_selectively, {"l_th_10_max_size": l_th_10_size,
+                                                                                       "sh_th_10_max_size": sh_th_10_size})
+        data = []
+        # get tags 
+        for ex in tqdm(coll_exs):
+            if not "tags" in ex.keys():
+                post_thread_id = ex["f_id"].split("_")[0]
+                ex["tags"] = datab.apply_once(coll, funcs.retrieve_tag, {"post_th_id": post_thread_id})
+                count = datab.apply_once(coll, funcs.add_tags, {"f_id": ex["f_id"], \
+                                                                "tags": ex["tags"]})
+            data.append([ex["f_id"], ex["m_type"], ex["lx_str"], ex["f_descriptor"], ex["tags"]])
+        
+        
+        columns_str = ["fid", "mtype", "exprstr", "mention", "tags"]
+        df = pd.DataFrame(data, columns=columns_str)
+        df.to_csv("print_outs/untokenized_formula_data_formulas_" + str(coll) + ".csv", index=False, header=True)
+       
+    return 1
+
+
+def tokenize_examples_from_file(coll_names, file_names):
+
+    max_num_token_size = 30
+    
+    def check_for_long_tokens(arg):
+        arg_str = arg
+        if len(arg) > max_num_token_size:
+            arg_str = arg.replace(".", "")
+            if arg_str.isnumeric():
+                arg_str = round(float(arg_str), 5)
+        return arg_str
+ 
+    @timeout(2)
+    def exec_tokenization(arg):
+        return get_tokens(arg)
+
+    @timeout(2)
+    def exec_type_tokenization(arg):
+        return get_type_tokens(arg)
+
+    def cell_to_tokens(arg):
+        arg = check_for_long_tokens(arg)
+        return_val = []
+        try:
+            return_val = exec_tokenization(arg)
+        except Exception as e:
+            ...
+        return return_val
+
+
+    def cell_to_type_tokens(arg):
+        arg = check_for_long_tokens(arg)
+        return_val = []
+        try:
+            return_val = exec_type_tokenization(arg)
+        except Exception as e:
+            ...
+        return return_val
+
+    coll_count = 0
+    for filename in tqdm(file_names):
+        coll_df = pd.read_csv(filename)
+        coll_df["tokens"] = coll_df["exprstr"].map(cell_to_tokens)
+        coll_df["type_tokens"] = coll_df["exprstr"].map(cell_to_type_tokens)
+        coll_df.to_csv("print_outs/formula_data_formulas_" + str(coll_names[coll_count]) + ".csv", index=False, header=True)
+        coll_count += 1
+
+        #columns_str = ["fid", "mtype", "exprstr", "mention", "tokens", "type_tokens", "tags"]
+
+
+#----------------------------------------------------------------------------------------------------------
+
+"""
 def add_tags_column_in_formulas(data, sel_coll_names, coll_sizes):
 
     count = 1
@@ -247,15 +334,36 @@ def add_tags_column_in_formulas(data, sel_coll_names, coll_sizes):
     return migrated_count
 
 
+def add_tags_column_in_formulas_all(data, sel_coll_names): 
+    count = 1
+    migrated_total = 0
+    for coll in sel_coll_names:
+        print(coll + ": " + str(len(sel_coll_names)-1)+ " collections left")
+
+        # for
+        formula_id_tag_dict = data.apply_once(coll, funcs.migrate_tags_to_formulas_all, {})
+
+
+
+        migrated_total += len(formula_id_tag_dict.keys())
+        count += 1
+    return migrated_total
+"""
+
+
 if __name__ == "__main__":
 
     log_file_path = Path(".") / "conf" / "log.txt"              # processing log
     db_settings_file_path = Path(".") / "conf" / "db_conf.json" # settings file for the db connection (local)
     data = MSE_DBS("linux", db_settings_file_path, log_file_path)
-    """
+    
+    ### Uncomment the following block to add tags to formulas
+    ### (only formulas with "both" selection method are considered)
+    """"
     sel_coll_names = ["algebra-precalculus", "analytic-geometry", "elementary-functions", \
                       "elementary-number-theory", "elementary-set-theory", "euclidean-geometry", \
                       "trigonometry"]
+
     coll_sizes = {"algebra-precalculus": 43604, 
                   "analytic-geometry": 5934,
                   "elementary-functions": 515, 
@@ -268,13 +376,54 @@ if __name__ == "__main__":
     add_tags_column_in_formulas(data, sel_coll_names, coll_sizes) 
     """
 
+
+    ### Uncomment the following block to retrieve all equations that do not yet have a 
+    ### a semantic type
     """
     sel_coll_names = ["analytic-geometry", "elementary-functions", \
                       "elementary-number-theory", "elementary-set-theory", "euclidean-geometry", \
                       "trigonometry", "algebra-precalculus"]
-    """
-    sel_coll_names = ["elementary-functions", \
-                      "elementary-number-theory", "elementary-set-theory", "euclidean-geometry", \
-                      "trigonometry", "algebra-precalculus"]
+    
 
     retrieve_examples_unk(data, sel_coll_names, count_per_coll=500)
+    """
+
+    ### Uncomment the following block to add tags to formulas (STEP 1)
+    """
+    sel_coll_names = ["algebra-precalculus", "analytic-geometry", "elementary-functions", \
+                      "elementary-number-theory", "elementary-set-theory", "euclidean-geometry", \
+                      "trigonometry"]
+
+    coll_sizes = {"algebra-precalculus": 43604, 
+                  "analytic-geometry": 5934,
+                  "elementary-functions": 515, 
+                  "elementary-number-theory": 34454,
+                  "elementary-set-theory": 26535,
+                  "euclidean-geometry": 8188,
+                  "trigonometry": 27356}
+
+    longer_than_ten_max_size = 10000
+    shorter_than_ten_max_size = 10000
+    num_migrated = retrieve_examples_and_write_to_file(data, sel_coll_names, longer_than_ten_max_size, \
+                                                                             shorter_than_ten_max_size) 
+    print("Done")
+    """
+
+    ### Uncomment the following block to get data from intermediate untokenized files and
+    ### add tokenization (STEP 2)
+    
+    sel_coll_names = ["algebra-precalculus", "analytic-geometry", "elementary-functions", \
+                      "elementary-number-theory", "elementary-set-theory", "euclidean-geometry", \
+                      "trigonometry", "algebra-precalculus"]
+    path_suffix = Path("print_outs") / ""
+
+    sel_file_names = []
+    for coll_name in sel_coll_names:
+        file_name = path_suffix / ("untokenized_formula_data_formulas_" + coll_name + ".csv")
+        sel_file_names.append(file_name)
+
+    tokenize_examples_from_file(sel_coll_names, sel_file_names)
+
+
+    
+    

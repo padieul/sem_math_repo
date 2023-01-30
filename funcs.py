@@ -1,5 +1,6 @@
 from sem_math import PostThread, FormulaContextType, FormulaType, Comparer
 import spacy
+from bson.objectid import ObjectId
 
 
 # CATEGORIZATION FUNCTIONS
@@ -183,7 +184,7 @@ def migrate_tags_to_formulas(db, cl, coll_name, single_post_thread):
     tag_list = single_post_thread["tags"]
     for formula in single_post_thread["formulas"]:
 
-        if formula["decision"] == "both" and not formula["type"] == "UNK":
+        if formula["decision"] == "formula" and not formula["type"] == "UNK":
 
             f_id = str(post_thread_id) + "_" + formula["id"]
 
@@ -195,6 +196,40 @@ def migrate_tags_to_formulas(db, cl, coll_name, single_post_thread):
                 ...
 
     return count
+
+def retrieve_tag(db, cl, coll_name, data):
+
+    post_thread_id = data["post_th_id"]
+    tags_list = []
+
+    try:
+        obj_instance = ObjectId(post_thread_id)
+        tags_list = list(db[coll_name].find_one({"_id": obj_instance})["tags"])
+    except:
+        ...
+
+    return tags_list
+
+def add_tags(db, cl, coll_name, data):
+    coll_name = coll_name + "_FORMULAS"
+
+    f_id = data["f_id"]
+    tags_list = data["tags"]
+
+    #obj_instance = ObjectId(post_th_id)
+
+    try:
+        db[coll_name].update_one({"f_id": f_id}, {"$set": {"tags": tags_list}})
+        count = 1
+    except:
+        ...
+    return count
+    
+"""
+def migrate_tags_to_formulas_all(db, cl, coll_name, data):
+    formulas_coll_name = coll_name + "_FORMULAS"
+"""
+
 
 
 
@@ -673,5 +708,35 @@ def retrieve_m_types_unk_long(db, cl, coll_name, data):
         both_types_list.append(type_dict)
 
     return both_types_list
+
+
+def retrieve_m_types_formula_selectively(db, cl, coll_name, data):
+
+    l_th_10_size = data["l_th_10_max_size"]
+    sh_th_10_size = data["sh_th_10_max_size"]
+
+    coll_name = coll_name + "_FORMULAS"
+
+    try:
+        formula_types_sh_th_10 = db[coll_name].find({"f_decision": "formula", 
+                                                     "m_type": {"$ne": "UNK"},
+                                                     "$expr": { "$lt": [{ "$strLenCP": "$lx_str" }, 10] }}).limit(sh_th_10_size)
+        
+    except Exception as e:
+        print(e)
+
+    try:
+        formula_types_l_th_10 = db[coll_name].find({"f_decision": "formula", 
+                                                     "m_type": {"$ne": "UNK"},
+                                                     "$expr": { "$gt": [{ "$strLenCP": "$lx_str" }, 10] }}).limit(l_th_10_size)
+
+    except Exception as e:
+        print(e)
+
+    formulas_type_list = [type_dict for type_dict in formula_types_l_th_10] + [type_dict for type_dict in formula_types_sh_th_10]
+
+    return formulas_type_list
+
+
 # --------------------------------------------------------------------------------------------------------------------
 # --------------------------------------------------------------------------------------------------------------------
