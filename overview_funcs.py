@@ -311,7 +311,8 @@ def tokenize_examples_from_file(coll_names, file_names):
 
     coll_count = 0
     for filename in tqdm(file_names):
-        coll_df = pd.read_csv(filename)
+        coll_df = pd.read_csv(filename, lineterminator='\n', on_bad_lines="skip")
+        print(coll_df.shape)
         coll_df["tokens"] = coll_df["exprstr"].map(cell_to_tokens)
         coll_df["type_tokens"] = coll_df["exprstr"].map(cell_to_type_tokens)
         coll_df.to_csv("print_outs/formula_data_formulas_" + str(coll_names[coll_count]) + ".csv", index=False, header=True)
@@ -411,10 +412,17 @@ if __name__ == "__main__":
 
     ### Uncomment the following block to get data from intermediate untokenized files and
     ### add tokenization (STEP 2)
-    
+    """
     sel_coll_names = ["algebra-precalculus", "analytic-geometry", "elementary-functions", \
                       "elementary-number-theory", "elementary-set-theory", "euclidean-geometry", \
-                      "trigonometry", "algebra-precalculus"]
+                      "trigonometry"]
+    """
+    """
+    sel_coll_names = ["elementary-set-theory", "euclidean-geometry", \
+                      "trigonometry"]
+    """
+    sel_coll_names = ["trigonometry"]
+
     path_suffix = Path("print_outs") / ""
 
     sel_file_names = []
