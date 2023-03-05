@@ -9,6 +9,8 @@
 /sem_math_env
 /wandb
 /classification_formulas/wandb
+/classification_formulas/logs
+/classification_formulas/tmp
 
 
 db_conf.json
