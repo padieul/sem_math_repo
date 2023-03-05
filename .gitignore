@@ -8,7 +8,7 @@
 /print_outs
 /sem_math_env
 /wandb
-/classification/wandb
+/classification_formulas/wandb
 
 
 db_conf.json
@@ -53,3 +53,4 @@ testing_threading.py
 bullshit.json
 formula_trees.txt
 .gitignore
+classification_formulas/temp.ipynb
