@@ -8,7 +8,12 @@
 /print_outs
 /sem_math_env
 /wandb
-/classification/wandb
+/classification_formulas_binary/wandb
+/classification_formulas_binary/logs
+/classification_formulas_binary/tmp
+/classification_formulas_multilabel/wandb
+/classification_formulas_multilabel/logs
+/classification_formulas_multilabel/tmp
 
 
 db_conf.json
@@ -51,3 +56,9 @@ print_outs/types_10_new.txt
 print_outs/types_100_formula_old.txt
 testing_threading.py
 bullshit.json
+formula_trees.txt
+.gitignore
+classification_formulas/temp.ipynb
+classification_formulas_binary/temp.ipynb
+classification_formulas_binary/metadata.tsv
+classification_formulas_binary/vectors.tsv
