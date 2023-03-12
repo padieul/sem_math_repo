@@ -1,5 +1,10 @@
 #from .math_types import FormulaType 
 #import math_types.FormulaType as FormulaType
+from lark import Visitor
+from rich import print as r_print
+from rich.tree import Tree as RTree
+
+
 if not __name__ == "__main__":
     from .math_types import FormulaType
     from .ft_transformer import FormulaTreeTransformer
@@ -21,14 +26,25 @@ class SemMathTokenizer:
         elif not self._no_subtypes:
             return self._serialize(self._tokenization)
 
+    def _print_token_list(self, token_list):
+        if isinstance(token_list, str):
+            print("[ " + token_list + " ]")
+        elif isinstance(token_list, list):
+            for token in token_list:
+                print("[ " + token + " ]")
+
     def display_tokens(self, retokenize=False):
         if self._tokenization == None or retokenize:
             self._tokenization = self._tokenize()
 
         if self._no_subtypes:
-            print(self._tokenization)
+            #print(self._tokenization)
+            token_list = self._tokenization
+            self._print_token_list(token_list)
         elif not self._no_subtypes:
-            print(self._serialize(self._tokenization))
+            #print(self._serialize(self._tokenization))
+            token_list = self._serialize(self._tokenization)
+            self._print_token_list(token_list)
 
     def _reduce_nested_list(self, n_list):
         return_list = []
@@ -51,7 +67,10 @@ class SemMathTokenizer:
         return tokenization
 
     def _merge_special_tokens(self, arg_list):
-        return self._merge_numeric_tokens(arg_list)
+        if isinstance(arg_list, list):
+            return self._merge_numeric_tokens(arg_list)
+        elif isinstance(arg_list, str):
+            return [arg_list]
 
     def _merge_numeric_tokens(self, arg_list):
         new_arg_list = []
@@ -109,6 +128,70 @@ class SemMathTokenizer:
 
 
 
+class TreeToTok(Visitor):
+    def __init__(self):
+        self._some_list = []
+        
+    def set_empty(self, arg):
+        print(arg)
+        self._some_list.append(arg)
+
+    def SET_BASIC(self, arg):
+        print(arg)
+        self._some_list.append(arg)
+
+        """
+        def set_expr(self, arg):
+            for elem in arg.children:
+                if not elem == None:
+                    token_type = elem.type 
+                    token_val = elem.value
+                    if not token_type == "RULE":
+                        self._some_list.append(token_val)
+        """
+        
+    def set_constant(self, arg):
+        print(arg)
+        for elem in arg.children:
+            if not elem == None:
+                token_type = elem.type 
+                token_val = elem.value
+                if not token_type == "RULE":
+                    self._some_list.append(token_val)
+
+    #self._some_list.append(arg)
+    def set_operator_set(self,arg):
+        print(arg)
+        for elem in arg.children:
+            if not elem == None:
+                token_type = elem.type 
+                token_val = elem.value
+                if not token_type == "RULE":
+                    self._some_list.append(token_val)
+        
+    def set_constant_custom(self, arg):
+        print(arg)
+        for elem in arg.children:
+            if not elem == None:
+                token_type = elem.type 
+                token_val = elem.value
+                if not token_type == "RULE":
+                    self._some_list.append(token_val)
+
+    def cmd_times(self, arg):
+        print(arg)
+        self._some_list.append(arg)
+
+    def get_some_list(self, arg):
+        print(arg)
+        return self._some_list
+    
+    def __default__(self, arg):
+        print(arg)
+
+
+
+
 if __name__ == "__main__":
     from math_types import FormulaType
     from ft_transformer import FormulaTreeTransformer
@@ -127,7 +210,7 @@ if __name__ == "__main__":
 
     
 
-    """
+    
     set_strs = [
                     #c"\\cal P^n(\Bbb N)", \
                     "\\mathbb{N}", \
@@ -159,6 +242,7 @@ if __name__ == "__main__":
                    "145-7124",
                    "256 * 4135 + f(134)"
                ]
+    """
 
     func_strs = [   "f : X \\times X \\to X", \
                     "f : X \\to X", \
@@ -192,10 +276,25 @@ if __name__ == "__main__":
                     "2n - 1", \
                 ]  
 
+    sample_strs = [
+                    "f : X \\to \{1,2,3\}", \
+                    "a^2 + b^2 - 234 * 6", \
+                    "A \\cup A", \
+                    "f(x) = sin(x)", \
+                    "\sinh(x) = (e^x-e^{-x})/2", \
+                    "f:S \rightarrow \mathbb{R}", \
+                    "g(x) = \sin( x ) + \cos( x )", \
+                    "(-1/n,1/n)", \
+                    "S \\times S", \
+                    "\\mathbb{R}^2", \
+                    "f : X \\times X \\to X", \
+                    #"\\frac{n!}{(n-k)!}", \
+                  ]
+
     print("*******************************************************")
     print("*******************************************************")
     print("*******************************************************")
-    for st in set_strs: #+ set_strs + func_strs:
+    for st in sample_strs: #+ set_strs + func_strs:
         parsed_structure = FormulaType(st).determine_formula_type()
         #print("STANDARD: ")
         if parsed_structure == None:
@@ -203,22 +302,33 @@ if __name__ == "__main__":
         #print(parsed_structure.pretty())
         
         print("========================================================")
+        print("========================================================")
         print("Formula: ", st)
         
         if parsed_structure == None:
             print("Could not parse")
             continue
+
         #print("Parsed structure: ")
-        #print(parsed_structure.pretty())
+        print(parsed_structure.pretty())
+        
+
         try:
+            #some_visitor = TreeToTok()
+            some_style = "encircle"
+            r_tree = parsed_structure.__rich__()
+            r_tree = RTree(label=r_tree, style=some_style, guide_style=some_style)
+
+            r_print(r_tree)
+            #some_visitor.visit(parsed_structure)
             sem_tok_no_subtypes = SemMathTokenizer(parsed_structure, True)
             sem_tok_with_subtypes = SemMathTokenizer(parsed_structure, False)
             
             #print("Tokenization: **********************************************************")
-            #print("Bare tokens: ")
+            print("Bare tokens: ")
     
             sem_tok_no_subtypes.display_tokens()
-            #print("Tokens with subtypes: ")
+            print("Tokens with subtypes: ")
         
             sem_tok_with_subtypes.display_tokens()
             #print("*************************************************************************")

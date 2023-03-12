@@ -43,7 +43,13 @@ class FormulaTreeTransformer(Transformer):
                 elif isinstance(arg[0], str):
                     return arg[0]
                 elif isinstance(arg[0], tuple):
-                    return arg[0]
+                    
+                    if self._no_subtypes:
+                        return arg[0]
+                    else:
+                        return (arg[0], current_type)
+                    
+                    #return arg[0]
             elif len(arg) > 1:
                 if self._no_subtypes:
                     return self._reduce_nested_list(arg)
