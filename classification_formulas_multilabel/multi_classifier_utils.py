@@ -2,6 +2,7 @@ import tensorflow as tf
 import keras_tuner as kt
 
 import io
+from pathlib import Path
 
 # Models and Model Builder functions for multiclassification experiments
 
@@ -619,3 +620,32 @@ def save_vec_vals(model1, encoder_int_tokens, encoder_int_types, tokens_input_le
 
     except Exception as e:
         print(e)
+
+
+# save token embeddings
+#
+def save_token_embeddings(model, encoder_int_tokens, embedding_layer_name, class_task_str, emb_dim_str):
+
+    vec_path = Path("embedding_vecs_multi/") / (class_task_str + "_" + emb_dim_str + "_" + "vectors.tsv")
+    meta_path = Path("embedding_vecs_multi/") / (class_task_str + "_" + emb_dim_str + "_" + "metadata.tsv")
+
+    out_v = io.open(vec_path, 'w', encoding='utf-8')
+    out_m = io.open(meta_path, 'w', encoding='utf-8')
+    weights = model.get_layer(embedding_layer_name).get_weights()[0]
+    vocab = encoder_int_tokens.get_vocabulary()
+
+    for index, word in enumerate(vocab):
+        if index == 0:
+            continue  # skip 0, it's padding.
+        vec = weights[index]
+        out_v.write('\t'.join([str(x) for x in vec]) + "\n")
+        out_m.write(word + "\n")
+    out_v.close()
+    out_m.close()
+
+
+
+
+def prediction_to_labels(arg):
+
+    ...

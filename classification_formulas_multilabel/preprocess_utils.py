@@ -103,13 +103,49 @@ def plot_label_frequencies(selected_labels_freq):
     fig = plt.figure()
     plt.xticks(rotation=90)
     ax = fig.add_axes([0,0,1,1])
-    #langs = ['C', 'C++', 'Java', 'Python', 'PHP']
-    #students = [23,17,35,29,12]
+
     for label in ax.get_xticklabels():
         label.set_rotation(45)
         label.set_ha('right')
+    ax.set_ylabel('number of formulas')
+    ax.set_yscale("log")
     ax.bar(labels,freq)
     plt.show()
+
+def plot_input_lengths(df):
+    
+    counts = df['tokens_len'].value_counts()
+
+    # Create bar chart
+    fig, ax = plt.subplots()
+    ax.bar(counts.index, counts.values, color="green")
+    ax.set_yscale("log")
+    ax.set_xlabel('Tokens list lengths')
+    ax.set_ylabel('Frequency')
+    #ax.set_title("Distribution of Tokens Lengths")
+    plt.show()
+
+def preprocess_data(corpus,
+                    irrelevant_features=["mtype",]):
+    # drop irrelevant columns
+    new_df = corpus.copy()
+    new_df.drop(irrelevant_features, inplace=True, axis=1)
+
+    # filter strings
+    def process_cell(cell_str):
+        stripped_f_str = cell_str[1:-1].replace("\\\\", "\\")
+        f_list = stripped_f_str.split(",")
+        f_list = [token.replace("'", "").replace(" ", "") for token in f_list]
+        f_list = ["{" if token == "\\{" else token for token in f_list]
+        f_list = ["}" if token == "\\}" else token for token in f_list]
+        return f_list
+
+    
+    #new_df["type_tokens"] = corpus["type_tokens"].map(process_cell)
+    #corpus["type_tokens_len"] = corpus["type_tokens"].apply(lambda x: len(x))
+    new_df["tokens"] = corpus["tokens"].map(process_cell)
+    new_df["tokens_len"] = new_df["tokens"].apply(lambda x: len(x))
+    return new_df
 
 
 
