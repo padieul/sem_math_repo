@@ -1,4 +1,9 @@
-### Formula Classification and Mathematical Token Embeddings
+# Formula Classification and Mathematical Token Embeddings
+
+## Description 
+
+The repository focuses on formula classification and mathematical token embeddings. It provides functionality to process and analyze the MSE dataset, which involves extracting mathematical formulas and assigning semantic types to them. Through a custom parser Latex strings of formulas are turned into a tree-based representation which can be used for further processing. Different variations of the formula classification task are implemented. Token embeddings extracted from the trained classification models can be useful for capturing the meaning of the underlying concepts.
+
 
 ## Technical architecture
 
@@ -14,12 +19,13 @@
   data processing functions from funcs.py to particular subsets of data
 * **sem_math module**:
     - math_types.py - includes the FormulaContextType and FormulaType classes 
+    - ft_transformer.py - includes the FormulaTreeTransformer class 
+    - math_tokenizer.py - provides the SemMathTokenizer class which helps creating a list of mathematical tokens from a formula tree 
     - post-thread.py - the PostThread class encapsulates a postThread database entry and facilitates formula extraction 
     - comparer.py - the Comparer class includes the arbitration mechanism which helps to assign a semantic type to a formula
     - /tests - includes unit tests for the FormulaType class methods
     - /grammar - contains .lark files with formula parser grammar rules
 * **classification_formulas_binary** - contains different binary classification variations that are used to train formula embeddings
 * **classification_formulas_multilabel** - contains different multi-label classification variations that are used to train formula embeddings
-
 
 
